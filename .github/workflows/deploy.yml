@@ -49,7 +49,7 @@ jobs:
       - name: Prepare site
         run: |
           mkdir _site
-          cp index.html styles.css _site/
+          cp index.html styles.css logo.svg _site/
           cp -r js _site/js
           cp -r data _site/data
 
