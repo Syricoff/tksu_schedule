@@ -1,0 +1,20 @@
+# Сгенерированные данные (создаются при сборке)
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Окружение
+.env
+venv/
+
+# Системные
+.DS_Store
+Thumbs.db
+
+# Старые файлы
+script.js
+script_p.js
+index_p.html
