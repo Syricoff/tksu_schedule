@@ -1,6 +1,6 @@
 import { esc, $, $$, fetchJSON, DATA_BASE, MONTH_NAMES, getMonday, fmtDate, formatWeekRange } from './utils.js';
 import { storageGet, storageSet } from './storage.js';
-import { parseScheduleData, getDaysForWeek, getWeeksFromData, renderWeekDots, renderDays } from './renderer.js';
+import { parseScheduleData, getDaysForWeek, getWeeksFromData, renderDays } from './renderer.js';
 
 // ── State ──
 var state = {
@@ -115,14 +115,12 @@ export function selectStaff(id) {
 function setWeek(monday) {
     state.currentMonday = monday;
     var content = $('#tch-schedule-content');
-    var weekDots = $('#tch-week-dots');
     var weekLabel = $('#tch-week-label');
     if (!state.parsedSchedule || !content) return;
 
     var dayKeys = getDaysForWeek(state.parsedSchedule.daySlots, monday);
     renderDays(content, state.parsedSchedule, dayKeys, state.offlineTs);
 
-    if (weekDots) renderWeekDots(weekDots, state.parsedSchedule.daySlots, monday, setWeek);
     if (weekLabel) {
         weekLabel.textContent = formatWeekRange(monday);
     }

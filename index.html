@@ -85,23 +85,23 @@
                 <div class="col-lg-8">
                     <div id="current-group-bar" class="current-group-bar d-none mb-3">
                         <span id="current-group-name" class="current-group-name"></span>
-                        <button id="btn-save-group" class="btn btn-sm btn-outline-warning" title="Сохранить группу">
+                        <button id="btn-save-group" class="btn-save-group" title="Сохранить группу">
                             <i class="fas fa-star"></i>
                         </button>
                     </div>
-                    <div class="month-nav d-flex align-items-center justify-content-center gap-3 mb-2">
-                        <button id="stu-month-prev" class="btn btn-outline-primary btn-sm nav-circle"><i class="fas fa-chevron-left"></i></button>
-                        <span id="stu-month-label" class="month-label fw-semibold"></span>
-                        <button id="stu-month-next" class="btn btn-outline-primary btn-sm nav-circle"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <div id="stu-week-nav" class="week-nav d-none mb-3">
-                        <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
-                            <button id="stu-week-prev" class="btn btn-outline-secondary btn-sm nav-circle"><i class="fas fa-chevron-left"></i></button>
-                            <span id="stu-week-label" class="week-label"></span>
-                            <button id="stu-week-next" class="btn btn-outline-secondary btn-sm nav-circle"><i class="fas fa-chevron-right"></i></button>
-                            <button id="stu-week-today" class="btn btn-sm btn-outline-primary week-today-btn">Сегодня</button>
+                    <div id="stu-schedule-nav" class="schedule-nav mb-3">
+                        <div class="schedule-nav-row">
+                            <button id="stu-month-prev" class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+                            <span id="stu-month-label" class="month-label"></span>
+                            <button id="stu-month-next" class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+                            <div id="stu-week-nav" class="d-none schedule-nav-row">
+                                <span class="nav-sep"></span>
+                                <button id="stu-week-prev" class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+                                <span id="stu-week-label" class="week-label"></span>
+                                <button id="stu-week-next" class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+                                <button id="stu-week-today" class="week-today-btn">Сегодня</button>
+                            </div>
                         </div>
-                        <div id="stu-week-dots" class="week-dots"></div>
                     </div>
                     <div id="stu-schedule-content">
                         <div class="empty-state text-center py-5">
@@ -141,19 +141,19 @@
                     </div>
                 </div>
                 <div class="col-lg-8">
-                    <div class="month-nav d-flex align-items-center justify-content-center gap-3 mb-2">
-                        <button id="tch-month-prev" class="btn btn-outline-primary btn-sm nav-circle"><i class="fas fa-chevron-left"></i></button>
-                        <span id="tch-month-label" class="month-label fw-semibold"></span>
-                        <button id="tch-month-next" class="btn btn-outline-primary btn-sm nav-circle"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <div id="tch-week-nav" class="week-nav d-none mb-3">
-                        <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
-                            <button id="tch-week-prev" class="btn btn-outline-secondary btn-sm nav-circle"><i class="fas fa-chevron-left"></i></button>
-                            <span id="tch-week-label" class="week-label"></span>
-                            <button id="tch-week-next" class="btn btn-outline-secondary btn-sm nav-circle"><i class="fas fa-chevron-right"></i></button>
-                            <button id="tch-week-today" class="btn btn-sm btn-outline-primary week-today-btn">Сегодня</button>
+                    <div id="tch-schedule-nav" class="schedule-nav mb-3">
+                        <div class="schedule-nav-row">
+                            <button id="tch-month-prev" class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+                            <span id="tch-month-label" class="month-label"></span>
+                            <button id="tch-month-next" class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+                            <div id="tch-week-nav" class="d-none schedule-nav-row">
+                                <span class="nav-sep"></span>
+                                <button id="tch-week-prev" class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+                                <span id="tch-week-label" class="week-label"></span>
+                                <button id="tch-week-next" class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+                                <button id="tch-week-today" class="week-today-btn">Сегодня</button>
+                            </div>
                         </div>
-                        <div id="tch-week-dots" class="week-dots"></div>
                     </div>
                     <div id="tch-schedule-content">
                         <div class="empty-state text-center py-5">

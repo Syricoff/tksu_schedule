@@ -1,6 +1,6 @@
 import { esc, $, $$, fetchJSON, DATA_BASE, MONTH_NAMES, getMonday, fmtDate, formatWeekRange } from './utils.js';
 import { storageGet, storageSet, getSavedGroups, setSavedGroups, isGroupSaved, cacheSchedule, getCachedSchedule, clearGroupCache } from './storage.js';
-import { parseScheduleData, getDaysForWeek, getWeeksFromData, renderWeekDots, renderDays } from './renderer.js';
+import { parseScheduleData, getDaysForWeek, getWeeksFromData, renderDays } from './renderer.js';
 
 // ── State ──
 var state = {
@@ -217,7 +217,7 @@ function updateSaveButton() {
     var btn = $('#btn-save-group');
     if (!btn) return;
     var saved = isGroupSaved(state.selectedId);
-    btn.className = saved ? 'btn btn-sm btn-warning' : 'btn btn-sm btn-outline-warning';
+    btn.className = saved ? 'btn-save-group active' : 'btn-save-group';
     btn.title = saved ? 'Убрать из сохранённых' : 'Сохранить группу';
 }
 
@@ -231,14 +231,12 @@ function disableStudentSelects() {
 function setWeek(monday) {
     state.currentMonday = monday;
     var content = $('#stu-schedule-content');
-    var weekDots = $('#stu-week-dots');
     var weekLabel = $('#stu-week-label');
     if (!state.parsedSchedule || !content) return;
 
     var dayKeys = getDaysForWeek(state.parsedSchedule.daySlots, monday);
     renderDays(content, state.parsedSchedule, dayKeys, state.offlineTs || null);
 
-    if (weekDots) renderWeekDots(weekDots, state.parsedSchedule.daySlots, monday, setWeek);
     if (weekLabel) {
         weekLabel.textContent = formatWeekRange(monday);
     }

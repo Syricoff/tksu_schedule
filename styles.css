@@ -67,28 +67,25 @@ body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .
 .sidebar-panel .form-control { border-radius: var(--radius-sm); border-color: var(--border); font-size: .88rem; padding: .5rem .75rem; transition: border-color .2s, box-shadow .2s; }
 .sidebar-panel .form-select:focus,
 .sidebar-panel .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 .2rem rgba(69,163,186,.15); }
-.sidebar-panel .form-select:disabled { background: #f8f9fa; opacity: .6; }
+.sidebar-panel .form-select:disabled { background: var(--bg); opacity: .6; }
 
 .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 0 0 var(--radius-sm) var(--radius-sm); box-shadow: var(--shadow-md); max-height: 260px; overflow-y: auto; z-index: 100; }
-.search-item { padding: .5rem .75rem; cursor: pointer; font-size: .88rem; border-bottom: 1px solid #f0f0f0; transition: background .15s; }
+.search-item { padding: .5rem .75rem; cursor: pointer; font-size: .88rem; border-bottom: 1px solid var(--border); transition: background .15s; }
 .search-item:last-child { border-bottom: 0; }
-.search-item:hover, .search-item.active { background: var(--primary-light); color: #2d7a8a; }
+.search-item:hover, .search-item.active { background: var(--primary-light); color: var(--primary); }
 .search-item small { display: block; font-size: .75rem; color: var(--text-muted); }
 .search-empty { padding: .75rem; text-align: center; color: var(--text-muted); font-size: .85rem; }
 
-.month-nav { user-select: none; }
-.month-label { font-size: 1.1rem; min-width: 180px; text-align: center; }
-.nav-circle { width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all .2s; }
-.nav-circle:hover { background: var(--primary); color: #fff; }
+.schedule-nav { user-select: none; background: var(--card-bg); border-radius: var(--radius-sm); padding: .4rem .6rem; border: 1px solid var(--border); }
+.schedule-nav-row { display: flex; align-items: center; justify-content: center; gap: .4rem; flex-wrap: wrap; }
+.month-label { font-size: .95rem; min-width: 140px; text-align: center; color: var(--text); font-weight: 600; }
+.nav-btn { height: 30px; padding: 0 .5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); transition: all .15s; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: .75rem; }
+.nav-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.nav-sep { width: 1px; height: 18px; background: var(--border); margin: 0 .15rem; }
+.week-label { font-size: .82rem; font-weight: 600; color: var(--text); white-space: nowrap; }
+.week-today-btn { height: 28px; font-size: .72rem; padding: 0 .55rem; border-radius: var(--radius-sm); background: var(--primary); color: #fff; border: none; cursor: pointer; transition: opacity .15s; }
+.week-today-btn:hover { opacity: .85; }
 
-/* ── Week navigation ── */
-.week-nav { text-align: center; }
-.week-label { font-size: .95rem; font-weight: 600; min-width: 200px; display: inline-block; }
-.week-today-btn { font-size: .78rem; padding: .25rem .65rem; border-radius: 20px; }
-.week-dots { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; padding: .25rem 0; }
-.week-dot { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: .2rem .6rem; font-size: .72rem; font-weight: 600; cursor: pointer; transition: all .2s; color: var(--text-muted); }
-.week-dot:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-.week-dot.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 /* ── Today highlight ── */
 .day-card.today { border: 2px solid var(--primary); }
@@ -103,11 +100,11 @@ body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .
 .day-weekday { font-weight: 600; font-size: .95rem; }
 .day-fulldate { opacity: .7; font-size: .78rem; }
 
-.lesson-row { display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid #f0f2f5; transition: background .15s; }
+.lesson-row { display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid var(--border); transition: background .15s; }
 .lesson-row.no-time { grid-template-columns: 1fr; margin-left: 80px; border-left: 3px solid var(--primary); }
 .lesson-row:last-child { border-bottom: 0; }
 .lesson-row:hover { background: var(--primary-light); }
-.lesson-time { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .6rem .4rem; border-right: 3px solid var(--primary); background: #f6fbfc; text-align: center; }
+.lesson-time { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .6rem .4rem; border-right: 3px solid var(--primary); background: var(--primary-light); text-align: center; }
 .time-num { font-size: .7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; }
 .time-range { font-size: .68rem; color: var(--text-muted); line-height: 1.2; margin-top: 2px; }
 .lesson-details { padding: .6rem .85rem; display: flex; flex-direction: column; gap: .15rem; }
@@ -122,9 +119,11 @@ body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .
 
 .content-spinner { padding: 3rem; text-align: center; color: var(--text-muted); }
 
-.current-group-bar { display: flex; align-items: center; justify-content: center; gap: .5rem; background: var(--card-bg); border-radius: var(--radius-sm); padding: .5rem 1rem; box-shadow: var(--shadow-sm); }
-.current-group-name { font-weight: 600; font-size: .95rem; }
-.current-group-bar .btn { border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; }
+.current-group-bar { display: flex; align-items: center; justify-content: center; gap: .5rem; background: var(--card-bg); border-radius: var(--radius-sm); padding: .4rem .75rem; border: 1px solid var(--border); }
+.current-group-name { font-weight: 600; font-size: .9rem; color: var(--text); }
+.btn-save-group { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: .2rem; transition: color .15s; }
+.btn-save-group:hover { color: var(--primary); }
+.btn-save-group.active { color: var(--primary); }
 
 .saved-group-item { display: flex; align-items: center; justify-content: space-between; padding: .45rem .65rem; border-radius: var(--radius-sm); cursor: pointer; font-size: .88rem; transition: background .15s; border: 1px solid var(--border); margin-bottom: .35rem; }
 .saved-group-item:last-child { margin-bottom: 0; }
@@ -145,9 +144,8 @@ body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .
 @media (max-width: 767px) {
     .app-header h1 { font-size: 1.1rem; }
     .header-logo { height: 36px; }
-    .month-label { font-size: .95rem; min-width: 130px; }
-    .week-label { font-size: .82rem; min-width: 160px; }
-    .week-dot { font-size: .65rem; padding: .15rem .45rem; }
+    .month-label { font-size: .88rem; min-width: 110px; }
+    .week-label { font-size: .75rem; }
     .lesson-row { grid-template-columns: 65px 1fr; }
     .time-num { font-size: .65rem; }
     .lesson-details { padding: .5rem .6rem; }
