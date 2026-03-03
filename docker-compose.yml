@@ -2,6 +2,8 @@ services:
   bot:
     build: .
     restart: unless-stopped
-    env_file: .env
+    environment:
+      - BOT_TOKEN
+      - WEBAPP_URL
     volumes:
       - ./data:/app/data:ro
