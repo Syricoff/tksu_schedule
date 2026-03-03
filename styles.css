@@ -32,7 +32,8 @@ body.tg-mode .sidebar-panel .form-select,
 body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .6rem; }
 
 /* Compact collapsible selectors in tg-mode on mobile */
-body.tg-mode .sidebar-collapse-toggle { display: none; }
+.sidebar-collapse-toggle { display: none; }
+.sidebar-collapsible { display: block; }
 @media (max-width: 991px) {
     body.tg-mode .sidebar-collapse-toggle {
         display: flex; align-items: center; justify-content: space-between;
