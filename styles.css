@@ -25,11 +25,15 @@ body.tg-mode {
 body.tg-mode .app-header,
 body.tg-mode .app-footer { display: none; }
 body.tg-mode main { padding-top: .5rem; }
-body.tg-mode .sidebar-panel { position: static; padding: .75rem; box-shadow: none; border: 1px solid var(--border); }
+body.tg-mode .sidebar-panel { position: static; padding: .75rem; box-shadow: none; border: 1px solid var(--border); background: var(--card-bg); }
 body.tg-mode .sidebar-section { margin-bottom: .5rem; }
 body.tg-mode .sidebar-title { font-size: .7rem; margin-bottom: .25rem; }
 body.tg-mode .sidebar-panel .form-select,
 body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .6rem; }
+body.tg-mode .day-card { border: 1px solid var(--border); }
+body.tg-mode .tab-switcher { border: 1px solid var(--border); }
+body.tg-mode .schedule-nav { border: 1px solid var(--border); }
+body.tg-mode .current-group-bar { border: 1px solid var(--border); }
 
 /* Compact collapsible selectors in tg-mode on mobile */
 .sidebar-collapse-toggle { display: none; }
