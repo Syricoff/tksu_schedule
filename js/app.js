@@ -179,6 +179,17 @@ function bindEvents() {
             stu.selectGroup(gidS);
         }
     });
+
+    // Collapsible sidebar toggles (for tg-mode mobile)
+    $$('.sidebar-collapse-toggle').forEach(function (toggle) {
+        var targetId = toggle.id.replace('-toggle', '-body');
+        var body = $('#' + targetId);
+        if (!body) return;
+        toggle.addEventListener('click', function () {
+            var open = body.classList.toggle('open');
+            toggle.classList.toggle('open', open);
+        });
+    });
 }
 
 // ── Init ──

@@ -16,11 +16,35 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI',system
 main { flex: 1; }
 
 /* ── Telegram Mini App mode ── */
-body.tg-mode { padding-top: 0; }
+body.tg-mode {
+    padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
+    padding-left: var(--tg-safe-area-inset-left, 0px);
+    padding-right: var(--tg-safe-area-inset-right, 0px);
+    padding-bottom: var(--tg-safe-area-inset-bottom, 0px);
+}
 body.tg-mode .app-header,
 body.tg-mode .app-footer { display: none; }
 body.tg-mode main { padding-top: .5rem; }
-body.tg-mode .sidebar-panel { position: static; }
+body.tg-mode .sidebar-panel { position: static; padding: .75rem; box-shadow: none; border: 1px solid var(--border); }
+body.tg-mode .sidebar-section { margin-bottom: .5rem; }
+body.tg-mode .sidebar-title { font-size: .7rem; margin-bottom: .25rem; }
+body.tg-mode .sidebar-panel .form-select,
+body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .6rem; }
+
+/* Compact collapsible selectors in tg-mode on mobile */
+body.tg-mode .sidebar-collapse-toggle { display: none; }
+@media (max-width: 991px) {
+    body.tg-mode .sidebar-collapse-toggle {
+        display: flex; align-items: center; justify-content: space-between;
+        background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+        padding: .4rem .75rem; font-size: .82rem; font-weight: 600; color: var(--text);
+        cursor: pointer; width: 100%; margin-bottom: .5rem;
+    }
+    body.tg-mode .sidebar-collapse-toggle i.chevron { transition: transform .2s; font-size: .7rem; color: var(--text-muted); }
+    body.tg-mode .sidebar-collapse-toggle.open i.chevron { transform: rotate(180deg); }
+    body.tg-mode .sidebar-collapsible { display: none; }
+    body.tg-mode .sidebar-collapsible.open { display: block; }
+}
 
 /* ── Tab switcher ── */
 .tab-switcher { display: flex; gap: .5rem; background: var(--card-bg); padding: .4rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); }
@@ -67,7 +91,7 @@ body.tg-mode .sidebar-panel { position: static; }
 
 /* ── Today highlight ── */
 .day-card.today { border: 2px solid var(--primary); }
-.day-card-header.today { background: linear-gradient(135deg, var(--primary), #2d7a8a); }
+.day-card-header.today { background: var(--primary); }
 .today-badge { background: rgba(255,255,255,.25); padding: .1rem .45rem; border-radius: 10px; font-size: .7rem; font-weight: 700; }
 
 .day-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; transition: box-shadow .2s; }
