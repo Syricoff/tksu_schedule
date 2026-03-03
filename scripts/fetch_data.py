@@ -83,6 +83,18 @@ def main():
         print("Ошибка: укажите TOKEN_STUDENTS и TOKEN_TEACHERS в .env или переменных окружения")
         sys.exit(1)
 
+    # ═══ Проверка доступности API ═══
+    print("🔗 Проверка доступности API...")
+    try:
+        req = Request(API_STU, method="HEAD", headers={"User-Agent": "TksuScheduleBot/1.0"})
+        with urlopen(req, timeout=10, context=_ssl_ctx):
+            pass
+        print("   API доступен")
+    except Exception as e:
+        print(f"❌ API недоступен: {e}")
+        print("   Завершение. Используйте локальные данные из data/")
+        sys.exit(1)
+
     months = get_months(MONTHS_AHEAD)
     errors = 0
 
