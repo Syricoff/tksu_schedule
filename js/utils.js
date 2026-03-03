@@ -4,6 +4,11 @@ export function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+export function stripHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/<[^>]*>/g, '').trim();
+}
+
 export function pad2(n) { return ('0' + n).slice(-2); }
 
 export function fmtDate(d) {

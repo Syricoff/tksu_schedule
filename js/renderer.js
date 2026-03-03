@@ -1,5 +1,5 @@
 import {
-    esc, pad2, fmtDate, parseDate, timeStr,
+    esc, stripHtml, pad2, fmtDate, parseDate, timeStr,
     MONTH_NAMES_GEN, WEEKDAYS, WEEKDAYS_SHORT,
     getMonday, addDays, isSameDay, formatWeekRange
 } from './utils.js';
@@ -122,9 +122,9 @@ export function renderDays(container, parsed, dayKeys, offlineTs) {
 
             if (!lessons.length) {
                 bodyHTML +=
-                    '<div class="lesson-row is-empty"><div class="lesson-time">' +
+                    '<div class="lesson-slot"><div class="lesson-time">' +
                     '<div class="time-num">' + esc(label) + '</div><div class="time-range">' + range + '</div></div>' +
-                    '<div class="lesson-details"><div class="lesson-discipline">Нет занятия</div></div></div>';
+                    '<div class="lesson-row is-empty"><div class="lesson-details"><div class="lesson-discipline">Нет занятия</div></div></div></div>';
                 hasContent = true;
                 return;
             }
@@ -132,12 +132,14 @@ export function renderDays(container, parsed, dayKeys, offlineTs) {
             lessons.forEach(function (item, j) {
                 var empty = item.is_empty == 1, self = item.self_work == 1;
                 var modified = item.id < 0 || item.modified == 1, first = j === 0;
-                var cls = 'lesson-row' + (empty || self ? ' is-empty' : '') + (modified ? ' is-modified' : '') + (!first ? ' no-time' : '');
+                var multi = lessons.length > 1;
+                var cls = 'lesson-row' + (empty || self ? ' is-empty' : '') + (modified ? ' is-modified' : '');
                 var disc = empty ? 'Пустая пара' : self ? 'Самоподготовка' : esc(item.discipline || '');
 
+                var cleanRoom = stripHtml(item.classroom || '');
                 var info = [];
                 if (item.class_type_name) info.push('<span class="info-item"><i class="fas fa-bookmark"></i>' + esc(item.class_type_name) + '</span>');
-                if (item.classroom) info.push('<span class="info-item"><i class="fas fa-door-open"></i>' + esc(item.classroom) + '</span>');
+                if (cleanRoom) info.push('<span class="info-item"><i class="fas fa-door-open"></i>' + esc(cleanRoom) + '</span>');
                 if (item.staffNames && item.staffNames.length) info.push('<span class="info-item"><i class="fas fa-user-tie"></i>' + esc(item.staffNames.join(', ')) + '</span>');
 
                 var group = '';
@@ -148,12 +150,25 @@ export function renderDays(container, parsed, dayKeys, offlineTs) {
                     group = '<div class="lesson-group-name"><i class="fas fa-users me-1"></i>' + esc(item.groupName) + (sf.length ? ', ' + sf.join(', ') : '') + '</div>';
                 }
 
+                if (first && multi) {
+                    bodyHTML += '<div class="lesson-slot" style="grid-template-rows:repeat(' + lessons.length + ',auto)">';
+                    bodyHTML += '<div class="lesson-time">' +
+                        '<div class="time-num">' + esc(label) + '</div><div class="time-range">' + range + '</div></div>';
+                } else if (first) {
+                    bodyHTML += '<div class="lesson-slot">';
+                    bodyHTML += '<div class="lesson-time">' +
+                        '<div class="time-num">' + esc(label) + '</div><div class="time-range">' + range + '</div></div>';
+                }
+
                 bodyHTML +=
                     '<div class="' + cls + '">' +
-                    (first ? '<div class="lesson-time" style="grid-row:span ' + lessons.length + '"><div class="time-num">' + esc(label) + '</div><div class="time-range">' + range + '</div></div>' : '') +
                     '<div class="lesson-details"><div class="lesson-discipline">' + disc + '</div>' +
                     (info.length ? '<div class="lesson-info">' + info.join('') + '</div>' : '') + group + '</div></div>';
                 hasContent = true;
+
+                if (j === lessons.length - 1) {
+                    bodyHTML += '</div>';
+                }
             });
         });
 

@@ -11,6 +11,7 @@ Telegram-бот для расписания КГУ им. К.Э. Циолковс
 
 import json
 import os
+import re
 import logging
 from datetime import date, timedelta
 from pathlib import Path
@@ -130,7 +131,7 @@ def _format_lesson(lesson: dict) -> str:
     time = lesson.get("lessonTime", "")
     disc = lesson.get("discipline", "—")
     ctype = lesson.get("class_type_name", "")
-    room = lesson.get("classroom", "")
+    room = re.sub(r"<[^>]*>", "", lesson.get("classroom", "")).strip()
     staff = ", ".join(lesson.get("staffNames", []))
     group = lesson.get("groupName", "")
 

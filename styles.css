@@ -100,11 +100,12 @@ body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .
 .day-weekday { font-weight: 600; font-size: .95rem; }
 .day-fulldate { opacity: .7; font-size: .78rem; }
 
-.lesson-row { display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid var(--border); transition: background .15s; }
-.lesson-row.no-time { grid-template-columns: 1fr; margin-left: 80px; border-left: 3px solid var(--primary); }
-.lesson-row:last-child { border-bottom: 0; }
+.lesson-slot { display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid var(--border); }
+.lesson-slot .lesson-time { grid-row: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .6rem .4rem; border-right: 3px solid var(--primary); background: var(--primary-light); text-align: center; }
+.lesson-row { transition: background .15s; }
+.lesson-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+.lesson-slot:last-child { border-bottom: 0; }
 .lesson-row:hover { background: var(--primary-light); }
-.lesson-time { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .6rem .4rem; border-right: 3px solid var(--primary); background: var(--primary-light); text-align: center; }
 .time-num { font-size: .7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; }
 .time-range { font-size: .68rem; color: var(--text-muted); line-height: 1.2; margin-top: 2px; }
 .lesson-details { padding: .6rem .85rem; display: flex; flex-direction: column; gap: .15rem; }
@@ -146,7 +147,7 @@ body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .
     .header-logo { height: 36px; }
     .month-label { font-size: .88rem; min-width: 110px; }
     .week-label { font-size: .75rem; }
-    .lesson-row { grid-template-columns: 65px 1fr; }
+    .lesson-slot { grid-template-columns: 65px 1fr; }
     .time-num { font-size: .65rem; }
     .lesson-details { padding: .5rem .6rem; }
     .lesson-discipline { font-size: .82rem; }
