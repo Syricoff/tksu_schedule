@@ -20,6 +20,7 @@ from threading import Lock
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+import ssl
 
 try:
     from dotenv import load_dotenv
@@ -35,15 +36,28 @@ TOKEN_TCH = os.environ.get("TOKEN_TEACHERS", "")
 
 OUT_DIR = Path(os.environ.get("DATA_DIR", "data"))
 MONTHS_AHEAD = int(os.environ.get("MONTHS_AHEAD", "4"))
-WORKERS = int(os.environ.get("WORKERS", "10"))
+WORKERS = int(os.environ.get("WORKERS", "3"))
+MAX_RETRIES = int(os.environ.get("MAX_RETRIES", "4"))
+REQUEST_DELAY = float(os.environ.get("REQUEST_DELAY", "0.3"))
 
 _print_lock = Lock()
+_ssl_ctx = ssl.create_default_context()
 
 
-def fetch_json(url):
-    req = Request(url, headers={"User-Agent": "TksuScheduleBot/1.0"})
-    with urlopen(req, timeout=60) as resp:
-        return json.loads(resp.read())
+def fetch_json(url, retries=MAX_RETRIES):
+    for attempt in range(1, retries + 1):
+        try:
+            req = Request(url, headers={"User-Agent": "TksuScheduleBot/1.0"})
+            with urlopen(req, timeout=30, context=_ssl_ctx) as resp:
+                return json.loads(resp.read())
+        except (HTTPError, URLError, OSError, ConnectionError, TimeoutError) as e:
+            if attempt == retries:
+                raise
+            wait = min(2 ** attempt, 30) + (attempt * 0.5)
+            with _print_lock:
+                print(f"   ↻ повтор {attempt}/{retries} через {wait:.0f}с: {e}")
+            time.sleep(wait)
+    raise RuntimeError("unreachable")
 
 
 def save(path, obj):
@@ -108,6 +122,7 @@ def main():
 
     def fetch_student(args):
         gid, m, y = args
+        time.sleep(REQUEST_DELAY)
         url = f"{API_STU}?token={TOKEN_STU}&group_id={quote(gid)}&month={m}&year={y}"
         resp = fetch_json(url)
         save(OUT_DIR / "s" / gid / f"{m}_{y}.json", resp["data"])
@@ -161,6 +176,7 @@ def main():
 
     def fetch_teacher(args):
         sid, m, y = args
+        time.sleep(REQUEST_DELAY)
         url = f"{API_TCH}?token={TOKEN_TCH}&staff_id={quote(sid)}&month={m}&year={y}"
         resp = fetch_json(url)
         save(OUT_DIR / "t" / sid / f"{m}_{y}.json", resp["data"])
