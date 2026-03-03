@@ -1,0 +1,13 @@
+__pycache__
+*.pyc
+.env
+.git
+.github
+node_modules
+js
+styles.css
+index.html
+logo.svg
+README.md
+scripts
+.vscode
