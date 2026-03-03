@@ -8,6 +8,7 @@ export function tgReady(onBack) {
     if (!isTelegram) return;
     tg.ready();
     tg.expand();
+    tg.requestFullscreen();
     document.body.classList.add('tg-mode');
     var header = $('#app-header');
     var footer = $('#app-footer');
