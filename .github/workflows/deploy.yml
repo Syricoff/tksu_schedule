@@ -32,10 +32,19 @@ jobs:
           python-version: '3.12'
 
       - name: Fetch schedule data from API
+        continue-on-error: true
         env:
           TOKEN_STUDENTS: ${{ secrets.TOKEN_STUDENTS }}
           TOKEN_TEACHERS: ${{ secrets.TOKEN_TEACHERS }}
         run: python scripts/fetch_data.py
+
+      - name: Check data exists
+        run: |
+          if [ ! -d data ] || [ ! -f data/students.json ]; then
+            echo "::error::Нет данных: API недоступен и data/ отсутствует в репозитории"
+            exit 1
+          fi
+          echo "✅ Данные найдены: $(cat data/meta.json)"
 
       - name: Prepare site
         run: |
