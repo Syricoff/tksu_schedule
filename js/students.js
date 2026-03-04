@@ -1,23 +1,27 @@
-import { esc, $, $$, fetchJSON, DATA_BASE, MONTH_NAMES, getMonday, fmtDate, formatWeekRange } from './utils.js';
+import { esc, $, $$, fetchJSON, DATA_BASE, getMonday, fmtDate, formatWeekRange } from './utils.js';
 import { storageGet, storageSet, getSavedGroups, setSavedGroups, isGroupSaved, cacheSchedule, getCachedSchedule, clearGroupCache } from './storage.js';
-import { parseScheduleData, getDaysForWeek, getWeeksFromData, renderDays } from './renderer.js';
+import { parseScheduleData, mergeScheduleData, getDaysForWeek, getWeeksFromData, renderDays } from './renderer.js';
 
 // ── State ──
 var state = {
     groupsData: null,
     allGroups: [],
     selectedId: null,
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
+    availableMonths: [],
     loaded: false,
     // Недельная пагинация
     currentMonday: null,
-    parsedSchedule: null
+    parsedSchedule: null,
+    weeks: [],
+    offlineTs: null
 };
 
 // ── Public API ──
 export function loadStudentsData() {
-    fetchJSON(DATA_BASE + 'students.json').then(function (groups) {
+    fetchJSON(DATA_BASE + 'meta.json').then(function (meta) {
+        state.availableMonths = meta.months || [];
+        return fetchJSON(DATA_BASE + 'students.json');
+    }).then(function (groups) {
         state.groupsData = groups;
         state.loaded = true;
         hideLoading();
@@ -79,12 +83,6 @@ function initStudentsUI() {
     if (!tabEl) return;
     tabEl.classList.remove('d-none');
 
-    var savedM = storageGet('stu_month');
-    var savedY = storageGet('stu_year');
-    if (savedM) state.month = +savedM;
-    if (savedY) state.year = +savedY;
-    updateMonthDisplay();
-
     var selDept = $('#sel-dept');
     if (state.groupsData) {
         Object.keys(state.groupsData).forEach(function (k) {
@@ -97,21 +95,6 @@ function initStudentsUI() {
         });
     }
     renderSavedGroups();
-}
-
-function updateMonthDisplay() {
-    var el = $('#stu-month-label');
-    if (el) el.textContent = MONTH_NAMES[state.month - 1] + ' ' + state.year;
-}
-
-export function changeMonth(dir) {
-    state.month += dir;
-    if (state.month <= 0) { state.month = 12; state.year--; }
-    else if (state.month >= 13) { state.month = 1; state.year++; }
-    storageSet('stu_month', state.month);
-    storageSet('stu_year', state.year);
-    updateMonthDisplay();
-    loadStudentSchedule();
 }
 
 export function populateCourses(deptKey) {
@@ -240,28 +223,31 @@ function setWeek(monday) {
     if (weekLabel) {
         weekLabel.textContent = formatWeekRange(monday);
     }
+
+    // Scroll to today's card if visible
+    setTimeout(function () {
+        var todayCard = content.querySelector('.day-card.today');
+        if (todayCard) todayCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
 }
 
 export function changeWeek(dir) {
-    if (!state.currentMonday) return;
-    var weeks = state.parsedSchedule ? getWeeksFromData(state.parsedSchedule.daySlots) : [];
+    if (!state.currentMonday || !state.weeks.length) return;
     var curIdx = -1;
     var curKey = fmtDate(state.currentMonday);
-    weeks.forEach(function (w, i) { if (fmtDate(w) === curKey) curIdx = i; });
+    state.weeks.forEach(function (w, i) { if (fmtDate(w) === curKey) curIdx = i; });
     var newIdx = curIdx + dir;
-    if (newIdx >= 0 && newIdx < weeks.length) {
-        setWeek(weeks[newIdx]);
+    if (newIdx >= 0 && newIdx < state.weeks.length) {
+        setWeek(state.weeks[newIdx]);
     }
 }
 
 export function goToCurrentWeek() {
-    if (!state.parsedSchedule) return;
+    if (!state.parsedSchedule || !state.weeks.length) return;
     var today = getMonday(new Date());
-    var weeks = getWeeksFromData(state.parsedSchedule.daySlots);
-    // Находим ближайшую неделю
-    var closest = weeks.length ? weeks[0] : today;
+    var closest = state.weeks[0];
     var minDiff = Infinity;
-    weeks.forEach(function (w) {
+    state.weeks.forEach(function (w) {
         var diff = Math.abs(w - today);
         if (diff < minDiff) { minDiff = diff; closest = w; }
     });
@@ -273,45 +259,59 @@ function loadStudentSchedule() {
     var el = $('#stu-schedule-content');
     if (!el) return;
     el.innerHTML = '<div class="content-spinner"><div class="spinner-border spinner-border-sm text-primary"></div> Загрузка…</div>';
-    var gid = state.selectedId, m = state.month, y = state.year;
+    var gid = state.selectedId;
+    var months = state.availableMonths;
+    if (!months.length) {
+        // Fallback: current month + next
+        var now = new Date();
+        months = [{ month: now.getMonth() + 1, year: now.getFullYear() }];
+    }
 
-    // Показываем недельную навигацию
-    var weekNav = $('#stu-week-nav');
-    if (weekNav) weekNav.classList.remove('d-none');
+    // Load all available months in parallel and merge
+    var promises = months.map(function (my) {
+        return fetchJSON(DATA_BASE + 's/' + encodeURIComponent(gid) + '/' + my.month + '_' + my.year + '.json')
+            .then(function (data) {
+                if (isGroupSaved(gid)) cacheSchedule(gid, my.month, my.year, data);
+                return { data: data, offline: false };
+            }).catch(function () {
+                var cached = getCachedSchedule(gid, my.month, my.year);
+                if (cached) return { data: cached.data, offline: cached.ts };
+                return null;
+            });
+    });
 
-    fetchJSON(DATA_BASE + 's/' + encodeURIComponent(gid) + '/' + m + '_' + y + '.json')
-        .then(function (data) {
-            if (isGroupSaved(gid)) cacheSchedule(gid, m, y, data);
-            state.parsedSchedule = parseScheduleData(data);
-            state.offlineTs = null;
-            initWeekFromData();
-        }).catch(function () {
-            var cached = getCachedSchedule(gid, m, y);
-            if (cached) {
-                state.parsedSchedule = parseScheduleData(cached.data);
-                state.offlineTs = cached.ts;
-                initWeekFromData();
-            } else {
-                el.innerHTML = '<div class="alert alert-warning m-3"><i class="fas fa-exclamation-circle me-2"></i>Нет данных за этот период. Попробуйте выбрать другой месяц.</div>';
-                var weekNav = $('#stu-week-nav');
-                if (weekNav) weekNav.classList.add('d-none');
-            }
+    Promise.all(promises).then(function (results) {
+        var parsedList = [], offlineTs = null;
+        results.forEach(function (r) {
+            if (!r) return;
+            parsedList.push(parseScheduleData(r.data));
+            if (r.offline) offlineTs = r.offline;
         });
+        if (!parsedList.length) {
+            el.innerHTML = '<div class="alert alert-warning m-3"><i class="fas fa-exclamation-circle me-2"></i>Нет данных. Попробуйте позже.</div>';
+            return;
+        }
+        state.parsedSchedule = mergeScheduleData(parsedList);
+        state.offlineTs = offlineTs;
+        state.weeks = getWeeksFromData(state.parsedSchedule.daySlots);
+        initWeekFromData();
+    });
 }
 
 function initWeekFromData() {
     if (!state.parsedSchedule) return;
-    var weeks = getWeeksFromData(state.parsedSchedule.daySlots);
-    if (!weeks.length) {
+    if (!state.weeks.length) {
         var el = $('#stu-schedule-content');
         if (el) el.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-calendar-times fa-2x mb-2 d-block"></i>Нет данных за этот период</div>';
         return;
     }
-    // Текущая неделя или первая доступная
+    // Ищем текущую неделю, иначе ближайшую к сегодня
     var today = getMonday(new Date());
-    var target = weeks[0];
-    weeks.forEach(function (w) {
-        if (fmtDate(w) === fmtDate(today)) target = w;
+    var target = state.weeks[0];
+    var minDiff = Infinity;
+    state.weeks.forEach(function (w) {
+        var diff = Math.abs(w - today);
+        if (diff < minDiff) { minDiff = diff; target = w; }
     });
     setWeek(target);
 }

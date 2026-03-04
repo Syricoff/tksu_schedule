@@ -32,6 +32,43 @@ export function parseScheduleData(data) {
     return { ltMap: ltMap, ltKeys: ltKeys, daySlots: daySlots, raw: data };
 }
 
+// ── Объединить несколько parsed-результатов в один ──
+export function mergeScheduleData(parsedList) {
+    if (!parsedList.length) return null;
+    if (parsedList.length === 1) return parsedList[0];
+    var merged = { ltMap: {}, ltKeys: [], daySlots: {}, raw: parsedList[0].raw };
+    var ltSet = {};
+    parsedList.forEach(function (p) {
+        // Merge lesson times
+        p.ltKeys.forEach(function (k) {
+            if (!ltSet[k]) {
+                ltSet[k] = true;
+                merged.ltMap[k] = p.ltMap[k];
+            }
+        });
+        // Merge daySlots
+        Object.keys(p.daySlots).forEach(function (ds) {
+            if (!merged.daySlots[ds]) {
+                merged.daySlots[ds] = p.daySlots[ds];
+            } else {
+                Object.keys(p.daySlots[ds]).forEach(function (ltId) {
+                    if (!merged.daySlots[ds][ltId]) {
+                        merged.daySlots[ds][ltId] = p.daySlots[ds][ltId];
+                    } else {
+                        merged.daySlots[ds][ltId] = merged.daySlots[ds][ltId].concat(p.daySlots[ds][ltId]);
+                    }
+                });
+            }
+        });
+    });
+    // Sort ltKeys
+    merged.ltKeys = Object.keys(ltSet).map(Number).sort(function (a, b) {
+        return (merged.ltMap[a].hour_from * 60 + merged.ltMap[a].minute_from) -
+               (merged.ltMap[b].hour_from * 60 + merged.ltMap[b].minute_from);
+    });
+    return merged;
+}
+
 // ── Получить список дней для конкретной недели ──
 export function getDaysForWeek(daySlots, monday) {
     var sunday = addDays(monday, 6);

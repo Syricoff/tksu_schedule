@@ -31,6 +31,7 @@ body.tg-mode .sidebar-title { font-size: .7rem; margin-bottom: .25rem; }
 body.tg-mode .sidebar-panel .form-select,
 body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .6rem; }
 body.tg-mode .day-card { border: 1px solid var(--border); }
+body.tg-mode .day-card.today { border: 2px solid var(--primary); }
 body.tg-mode .tab-switcher { border: 1px solid var(--border); }
 body.tg-mode .schedule-nav { border: 1px solid var(--border); }
 body.tg-mode .current-group-bar { border: 1px solid var(--border); }
@@ -82,10 +83,8 @@ body.tg-mode .current-group-bar { border: 1px solid var(--border); }
 
 .schedule-nav { user-select: none; background: var(--card-bg); border-radius: var(--radius-sm); padding: .4rem .6rem; border: 1px solid var(--border); }
 .schedule-nav-row { display: flex; align-items: center; justify-content: center; gap: .4rem; flex-wrap: wrap; }
-.month-label { font-size: .95rem; min-width: 140px; text-align: center; color: var(--text); font-weight: 600; }
 .nav-btn { height: 30px; padding: 0 .5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); transition: all .15s; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: .75rem; }
 .nav-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-.nav-sep { width: 1px; height: 18px; background: var(--border); margin: 0 .15rem; }
 .week-label { font-size: .82rem; font-weight: 600; color: var(--text); white-space: nowrap; }
 .week-today-btn { height: 28px; font-size: .72rem; padding: 0 .55rem; border-radius: var(--radius-sm); background: var(--primary); color: #fff; border: none; cursor: pointer; transition: opacity .15s; }
 .week-today-btn:hover { opacity: .85; }
@@ -149,7 +148,6 @@ body.tg-mode .current-group-bar { border: 1px solid var(--border); }
 @media (max-width: 767px) {
     .app-header h1 { font-size: 1.1rem; }
     .header-logo { height: 36px; }
-    .month-label { font-size: .88rem; min-width: 110px; }
     .week-label { font-size: .75rem; }
     .lesson-slot { grid-template-columns: 65px 1fr; }
     .time-num { font-size: .65rem; }

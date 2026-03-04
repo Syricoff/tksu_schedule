@@ -36,13 +36,7 @@ function bindEvents() {
         btn.addEventListener('click', function () { switchTab(this.dataset.tab); });
     });
 
-    // --- Students: month navigation ---
-    var stuMonthPrev = $('#stu-month-prev');
-    var stuMonthNext = $('#stu-month-next');
-    if (stuMonthPrev) stuMonthPrev.addEventListener('click', function (e) { e.preventDefault(); stu.changeMonth(-1); });
-    if (stuMonthNext) stuMonthNext.addEventListener('click', function (e) { e.preventDefault(); stu.changeMonth(1); });
-
-    // Students: week navigation
+    // --- Students: week navigation ---
     var stuWeekPrev = $('#stu-week-prev');
     var stuWeekNext = $('#stu-week-next');
     var stuWeekToday = $('#stu-week-today');
@@ -79,13 +73,7 @@ function bindEvents() {
     var btnSave = $('#btn-save-group');
     if (btnSave) btnSave.addEventListener('click', function () { stu.toggleSaveGroup(); });
 
-    // --- Teachers: month navigation ---
-    var tchMonthPrev = $('#tch-month-prev');
-    var tchMonthNext = $('#tch-month-next');
-    if (tchMonthPrev) tchMonthPrev.addEventListener('click', function (e) { e.preventDefault(); tch.changeMonth(-1); });
-    if (tchMonthNext) tchMonthNext.addEventListener('click', function (e) { e.preventDefault(); tch.changeMonth(1); });
-
-    // Teachers: week navigation
+    // --- Teachers: week navigation ---
     var tchWeekPrev = $('#tch-week-prev');
     var tchWeekNext = $('#tch-week-next');
     var tchWeekToday = $('#tch-week-today');
