@@ -17,10 +17,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
 from threading import Lock
-from urllib.error import HTTPError, URLError
-from urllib.parse import quote
-from urllib.request import Request, urlopen
-import ssl
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 try:
     from dotenv import load_dotenv
@@ -36,28 +36,35 @@ TOKEN_TCH = os.environ.get("TOKEN_TEACHERS", "")
 
 OUT_DIR = Path(os.environ.get("DATA_DIR", "data"))
 MONTHS_AHEAD = int(os.environ.get("MONTHS_AHEAD", "4"))
-WORKERS = int(os.environ.get("WORKERS", "3"))
+WORKERS = int(os.environ.get("WORKERS", "4"))
 MAX_RETRIES = int(os.environ.get("MAX_RETRIES", "4"))
-REQUEST_DELAY = float(os.environ.get("REQUEST_DELAY", "0.3"))
+REQUEST_DELAY = float(os.environ.get("REQUEST_DELAY", "0.15"))
 
 _print_lock = Lock()
-_ssl_ctx = ssl.create_default_context()
 
 
-def fetch_json(url, retries=MAX_RETRIES):
-    for attempt in range(1, retries + 1):
-        try:
-            req = Request(url, headers={"User-Agent": "TksuScheduleBot/1.0"})
-            with urlopen(req, timeout=30, context=_ssl_ctx) as resp:
-                return json.loads(resp.read())
-        except (HTTPError, URLError, OSError, ConnectionError, TimeoutError) as e:
-            if attempt == retries:
-                raise
-            wait = min(2 ** attempt, 30) + (attempt * 0.5)
-            with _print_lock:
-                print(f"   ↻ повтор {attempt}/{retries} через {wait:.0f}с: {e}")
-            time.sleep(wait)
-    raise RuntimeError("unreachable")
+def _make_session():
+    """Создаёт requests.Session с keep-alive и автоматическими retry."""
+    s = requests.Session()
+    s.headers["User-Agent"] = "TksuScheduleBot/1.0"
+    retry = Retry(
+        total=MAX_RETRIES,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+    )
+    adapter = HTTPAdapter(
+        max_retries=retry,
+        pool_connections=WORKERS,
+        pool_maxsize=WORKERS,
+    )
+    s.mount("https://", adapter)
+    return s
+
+
+def fetch_json(session, url):
+    resp = session.get(url, timeout=60)
+    resp.raise_for_status()
+    return resp.json()
 
 
 def save(path, obj):
@@ -83,12 +90,12 @@ def main():
         print("Ошибка: укажите TOKEN_STUDENTS и TOKEN_TEACHERS в .env или переменных окружения")
         sys.exit(1)
 
+    session = _make_session()
+
     # ═══ Проверка доступности API ═══
     print("🔗 Проверка доступности API...")
     try:
-        req = Request(API_STU, method="HEAD", headers={"User-Agent": "TksuScheduleBot/1.0"})
-        with urlopen(req, timeout=10, context=_ssl_ctx):
-            pass
+        session.get(f"{API_STU}?token={TOKEN_STU}", timeout=10).raise_for_status()
         print("   API доступен")
     except Exception as e:
         print(f"❌ API недоступен: {e}")
@@ -101,8 +108,8 @@ def main():
     # ═══ Студенты: каталог ═══
     print("📚 Загрузка каталога групп...")
     try:
-        stu_resp = fetch_json(f"{API_STU}?token={TOKEN_STU}")
-    except (HTTPError, URLError) as e:
+        stu_resp = fetch_json(session, f"{API_STU}?token={TOKEN_STU}")
+    except Exception as e:
         print(f"Критическая ошибка: не удалось скачать каталог студентов: {e}")
         sys.exit(1)
 
@@ -135,8 +142,8 @@ def main():
     def fetch_student(args):
         gid, m, y = args
         time.sleep(REQUEST_DELAY)
-        url = f"{API_STU}?token={TOKEN_STU}&group_id={quote(gid)}&month={m}&year={y}"
-        resp = fetch_json(url)
+        url = f"{API_STU}?token={TOKEN_STU}&group_id={gid}&month={m}&year={y}"
+        resp = fetch_json(session, url)
         save(OUT_DIR / "s" / gid / f"{m}_{y}.json", resp["data"])
 
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
@@ -157,8 +164,8 @@ def main():
     # ═══ Преподаватели: каталог ═══
     print("👨‍🏫 Загрузка каталога преподавателей...")
     try:
-        tch_resp = fetch_json(f"{API_TCH}?token={TOKEN_TCH}")
-    except (HTTPError, URLError) as e:
+        tch_resp = fetch_json(session, f"{API_TCH}?token={TOKEN_TCH}")
+    except Exception as e:
         print(f"Критическая ошибка: не удалось скачать каталог преподавателей: {e}")
         sys.exit(1)
 
@@ -189,8 +196,8 @@ def main():
     def fetch_teacher(args):
         sid, m, y = args
         time.sleep(REQUEST_DELAY)
-        url = f"{API_TCH}?token={TOKEN_TCH}&staff_id={quote(sid)}&month={m}&year={y}"
-        resp = fetch_json(url)
+        url = f"{API_TCH}?token={TOKEN_TCH}&staff_id={sid}&month={m}&year={y}"
+        resp = fetch_json(session, url)
         save(OUT_DIR / "t" / sid / f"{m}_{y}.json", resp["data"])
 
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
