@@ -83,7 +83,7 @@ body.tg-mode .current-group-bar { border: 1px solid var(--border); }
 
 .schedule-nav { user-select: none; background: var(--card-bg); border-radius: var(--radius-sm); padding: .4rem .6rem; border: 1px solid var(--border); }
 .schedule-nav-row { display: flex; align-items: center; justify-content: center; gap: .4rem; flex-wrap: wrap; }
-.nav-btn { height: 30px; padding: 0 .5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); transition: all .15s; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: .75rem; }
+.nav-btn { height: 30px; padding: 0 .5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); transition: all .15s; background: transparent; border: 2px solid var(--primary); color: var(--primary); cursor: pointer; font-size: .75rem; }
 .nav-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 .week-label { font-size: .82rem; font-weight: 600; color: var(--text); white-space: nowrap; }
 .week-today-btn { height: 28px; font-size: .72rem; padding: 0 .55rem; border-radius: var(--radius-sm); background: var(--primary); color: #fff; border: none; cursor: pointer; transition: opacity .15s; }
