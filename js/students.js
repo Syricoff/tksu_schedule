@@ -143,7 +143,7 @@ export function selectGroup(id) {
         if (name) name.textContent = g[0].name;
         if (bar) bar.classList.remove('d-none');
         if (window.goatcounter) {
-            window.goatcounter.count({ path: 'event-group', title: g[0].name, event: true });
+            window.goatcounter.count({ path: 'event-group/' + g[0].name, title: g[0].name, event: true });
         }
     }
     updateSaveButton();
