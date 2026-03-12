@@ -90,6 +90,12 @@ export function populateStaff(deptId) {
 export function selectStaff(id) {
     state.selectedId = id;
     storageSet('tch_staff', id);
+    if (window.goatcounter) {
+        var s = state.allStaff.filter(function (x) { return String(x.id) === String(id); });
+        if (s.length) {
+            window.goatcounter.count({ path: 'event-teacher', title: s[0].name, event: true });
+        }
+    }
     loadTeacherSchedule();
 }
 

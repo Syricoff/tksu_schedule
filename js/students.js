@@ -142,6 +142,9 @@ export function selectGroup(id) {
         var name = $('#current-group-name');
         if (name) name.textContent = g[0].name;
         if (bar) bar.classList.remove('d-none');
+        if (window.goatcounter) {
+            window.goatcounter.count({ path: 'event-group', title: g[0].name, event: true });
+        }
     }
     updateSaveButton();
     renderSavedGroups();
