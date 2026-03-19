@@ -7,6 +7,12 @@ on:
     # Обновлять данные каждый день в 5:00 UTC (8:00 МСК)
     - cron: '0 5 * * *'
   workflow_dispatch:
+    inputs:
+      skip_fetch:
+        description: 'Пропустить скачивание расписания (использовать текущие data/ из репозитория)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -35,11 +41,16 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Fetch schedule data from API
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.skip_fetch != true }}
         continue-on-error: true
         env:
           TOKEN_STUDENTS: ${{ secrets.TOKEN_STUDENTS }}
           TOKEN_TEACHERS: ${{ secrets.TOKEN_TEACHERS }}
         run: python scripts/fetch_data.py
+
+      - name: Skip fetch (manual run)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_fetch == true }}
+        run: echo "⏭️ Пропускаем скачивание расписания по флагу skip_fetch"
 
       - name: Check data exists
         run: |
