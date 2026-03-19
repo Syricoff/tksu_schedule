@@ -101,6 +101,9 @@ function bindVKBackEvents() {
 
     window.addEventListener('popstate', function () {
         if (!vkBackVisible || !backHandler) return;
+
+        // Marker is consumed by this popstate; allow immediate re-arm if needed.
+        vkHistoryArmed = false;
         backHandler();
 
         // Re-arm history marker when we still need in-app back in VK.
@@ -123,6 +126,7 @@ function bindVKThemeEvents() {
 
         // Fallback for environments where native back events are sent directly by container.
         if ((type === 'VKWebAppSwipeBack' || type === 'VKWebAppBackButtonPressed') && vkBackVisible && backHandler) {
+            vkHistoryArmed = false;
             backHandler();
             if (vkBackVisible) {
                 setTimeout(armVKBackHistory, 0);
@@ -133,7 +137,7 @@ function bindVKThemeEvents() {
 }
 
 function armVKBackHistory() {
-    if (!isVK || vkHistoryArmed) return;
+    if (!isVK) return;
     var state = window.history.state || {};
     if (state && state.__vk_back_marker) {
         vkHistoryArmed = true;

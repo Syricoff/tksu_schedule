@@ -36,7 +36,7 @@ body.miniapp-mode .tab-switcher { border: 1px solid var(--border); }
 body.miniapp-mode .schedule-nav { border: 1px solid var(--border); }
 body.miniapp-mode .current-group-bar { border: 1px solid var(--border); }
 
-/* Compact collapsible selectors in tg-mode on mobile */
+/* Compact collapsible selectors in miniapp-mode on mobile */
 .sidebar-collapse-toggle { display: none; }
 .sidebar-collapsible { display: block; }
 @media (max-width: 991px) {
