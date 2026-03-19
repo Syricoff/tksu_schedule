@@ -22,8 +22,8 @@ function switchTab(tabName) {
         else platformHideBack();
     }
 
-    // Keep tab state in URL so browser/VK native back can return to students.
-    if (window.location.hash.replace('#', '') !== tabName) {
+    // Hash navigation is disabled in VK to avoid conflicts with bridge/back history.
+    if (platformName !== 'vk' && window.location.hash.replace('#', '') !== tabName) {
         window.location.hash = tabName;
     }
 
@@ -36,12 +36,14 @@ function switchTab(tabName) {
 
 // ── Events ──
 function bindEvents() {
-    window.addEventListener('hashchange', function () {
-        var tab = window.location.hash.replace('#', '');
-        if ((tab === 'students' || tab === 'teachers') && tab !== activeTab) {
-            switchTab(tab);
-        }
-    });
+    if (platformName !== 'vk') {
+        window.addEventListener('hashchange', function () {
+            var tab = window.location.hash.replace('#', '');
+            if ((tab === 'students' || tab === 'teachers') && tab !== activeTab) {
+                switchTab(tab);
+            }
+        });
+    }
 
     // Tab switching
     $$('.tab-btn').forEach(function (btn) {
