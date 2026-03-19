@@ -15,41 +15,41 @@
 body { background: var(--bg); color: var(--text); font-family: 'Segoe UI',system-ui,-apple-system,sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
 main { flex: 1; }
 
-/* ── Telegram Mini App mode ── */
-body.tg-mode {
+/* ── Mini App mode (Telegram / VK) ── */
+body.miniapp-mode {
     padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
     padding-left: var(--tg-safe-area-inset-left, 0px);
     padding-right: var(--tg-safe-area-inset-right, 0px);
     padding-bottom: var(--tg-safe-area-inset-bottom, 0px);
 }
-body.tg-mode .app-header,
-body.tg-mode .app-footer { display: none; }
-body.tg-mode main { padding-top: .5rem; }
-body.tg-mode .sidebar-panel { position: static; padding: .75rem; box-shadow: none; border: 1px solid var(--border); background: var(--card-bg); }
-body.tg-mode .sidebar-section { margin-bottom: .5rem; }
-body.tg-mode .sidebar-title { font-size: .7rem; margin-bottom: .25rem; }
-body.tg-mode .sidebar-panel .form-select,
-body.tg-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .6rem; }
-body.tg-mode .day-card { border: 1px solid var(--border); }
-body.tg-mode .day-card.today { border: 2px solid var(--primary); }
-body.tg-mode .tab-switcher { border: 1px solid var(--border); }
-body.tg-mode .schedule-nav { border: 1px solid var(--border); }
-body.tg-mode .current-group-bar { border: 1px solid var(--border); }
+body.miniapp-mode .app-header,
+body.miniapp-mode .app-footer { display: none; }
+body.miniapp-mode main { padding-top: .5rem; }
+body.miniapp-mode .sidebar-panel { position: static; padding: .75rem; box-shadow: none; border: 1px solid var(--border); background: var(--card-bg); }
+body.miniapp-mode .sidebar-section { margin-bottom: .5rem; }
+body.miniapp-mode .sidebar-title { font-size: .7rem; margin-bottom: .25rem; }
+body.miniapp-mode .sidebar-panel .form-select,
+body.miniapp-mode .sidebar-panel .form-control { font-size: .82rem; padding: .35rem .6rem; }
+body.miniapp-mode .day-card { border: 1px solid var(--border); }
+body.miniapp-mode .day-card.today { border: 2px solid var(--primary); }
+body.miniapp-mode .tab-switcher { border: 1px solid var(--border); }
+body.miniapp-mode .schedule-nav { border: 1px solid var(--border); }
+body.miniapp-mode .current-group-bar { border: 1px solid var(--border); }
 
 /* Compact collapsible selectors in tg-mode on mobile */
 .sidebar-collapse-toggle { display: none; }
 .sidebar-collapsible { display: block; }
 @media (max-width: 991px) {
-    body.tg-mode .sidebar-collapse-toggle {
+    body.miniapp-mode .sidebar-collapse-toggle {
         display: flex; align-items: center; justify-content: space-between;
         background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
         padding: .4rem .75rem; font-size: .82rem; font-weight: 600; color: var(--text);
         cursor: pointer; width: 100%; margin-bottom: .5rem;
     }
-    body.tg-mode .sidebar-collapse-toggle i.chevron { transition: transform .2s; font-size: .7rem; color: var(--text-muted); }
-    body.tg-mode .sidebar-collapse-toggle.open i.chevron { transform: rotate(180deg); }
-    body.tg-mode .sidebar-collapsible { display: none; }
-    body.tg-mode .sidebar-collapsible.open { display: block; }
+    body.miniapp-mode .sidebar-collapse-toggle i.chevron { transition: transform .2s; font-size: .7rem; color: var(--text-muted); }
+    body.miniapp-mode .sidebar-collapse-toggle.open i.chevron { transform: rotate(180deg); }
+    body.miniapp-mode .sidebar-collapsible { display: none; }
+    body.miniapp-mode .sidebar-collapsible.open { display: block; }
 }
 
 /* ── Tab switcher ── */

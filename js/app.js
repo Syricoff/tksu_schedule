@@ -1,6 +1,6 @@
 import { $, $$ } from './utils.js';
-import { storageGet, storageSet } from './storage.js';
-import { isTelegram, tgReady, tgShowBack, tgHideBack } from './telegram.js';
+import { storageGet, storageSet, storageInit } from './storage.js';
+import { platformName, platformReady, platformShowBack, platformHideBack } from './platform.js';
 import * as stu from './students.js';
 import * as tch from './teachers.js';
 
@@ -17,9 +17,14 @@ function switchTab(tabName) {
     var target = $('#tab-' + tabName);
     if (target) target.classList.remove('d-none');
 
-    if (isTelegram) {
-        if (tabName === 'teachers') tgShowBack();
-        else tgHideBack();
+    if (platformName === 'telegram' || platformName === 'vk') {
+        if (tabName === 'teachers') platformShowBack();
+        else platformHideBack();
+    }
+
+    // Keep tab state in URL so browser/VK native back can return to students.
+    if (window.location.hash.replace('#', '') !== tabName) {
+        window.location.hash = tabName;
     }
 
     // Lazy-load
@@ -31,6 +36,13 @@ function switchTab(tabName) {
 
 // ── Events ──
 function bindEvents() {
+    window.addEventListener('hashchange', function () {
+        var tab = window.location.hash.replace('#', '');
+        if ((tab === 'students' || tab === 'teachers') && tab !== activeTab) {
+            switchTab(tab);
+        }
+    });
+
     // Tab switching
     $$('.tab-btn').forEach(function (btn) {
         btn.addEventListener('click', function () { switchTab(this.dataset.tab); });
@@ -182,13 +194,16 @@ function bindEvents() {
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', function () {
-    tgReady(function () {
+    platformReady(function () {
         if (activeTab === 'teachers') switchTab('students');
-    });
-    bindEvents();
+    }).then(function () {
+        return storageInit();
+    }).finally(function () {
+        bindEvents();
 
-    var savedTab = storageGet('active_tab') || 'students';
-    var hash = window.location.hash.replace('#', '');
-    if (hash === 'teachers' || hash === 'students') savedTab = hash;
-    switchTab(savedTab);
+        var savedTab = storageGet('active_tab') || 'students';
+        var hash = window.location.hash.replace('#', '');
+        if (hash === 'teachers' || hash === 'students') savedTab = hash;
+        switchTab(savedTab);
+    });
 });
