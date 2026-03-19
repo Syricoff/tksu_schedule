@@ -204,20 +204,45 @@ function applyVKTheme(cfg) {
     var root = document.documentElement.style;
     var scheme = cfg.scheme || '';
     var appTheme = cfg.appearance || '';
-    var dark = appTheme === 'dark' || scheme.indexOf('dark') !== -1;
+    var darkSchemes = ['space_gray', 'vkcom_dark', 'client_dark', 'inherit_dark'];
+    var dark = appTheme === 'dark' || scheme.indexOf('dark') !== -1 || darkSchemes.indexOf(scheme) !== -1;
 
-    if (cfg.background_color) root.setProperty('--bg', cfg.background_color);
-    if (cfg.background_secondary) root.setProperty('--card-bg', cfg.background_secondary);
-    if (cfg.text_color) root.setProperty('--text', cfg.text_color);
-    if (cfg.hint_color) root.setProperty('--text-muted', cfg.hint_color);
-    if (cfg.separator_color) root.setProperty('--border', cfg.separator_color);
+    var bg = pickVKThemeColor(cfg, ['background_color', 'bg_color', 'secondary_bg_color']);
+    var cardBg = pickVKThemeColor(cfg, ['background_secondary', 'secondary_bg_color', 'section_bg_color', 'modal_card_background']);
+    var text = pickVKThemeColor(cfg, ['text_color']);
+    var hint = pickVKThemeColor(cfg, ['hint_color', 'subtitle_text_color']);
+    var border = pickVKThemeColor(cfg, ['separator_color', 'section_separator_color']);
+    var accent = pickVKThemeColor(cfg, ['accent_color', 'button_color', 'link_color']);
 
-    if (cfg.accent_color) {
-        root.setProperty('--primary', cfg.accent_color);
-        root.setProperty('--primary-light', cfg.accent_color + '14');
-    }
+    if (!bg) bg = dark ? '#0f1014' : '#f0f2f5';
+    if (!cardBg) cardBg = dark ? '#1b1d23' : '#ffffff';
+    if (!text) text = dark ? '#f1f3f5' : '#212529';
+    if (!hint) hint = dark ? '#98a2b3' : '#6c757d';
+    if (!border) border = dark ? '#2f3440' : '#e3e6ea';
+    if (!accent) accent = dark ? '#6aa7ff' : '#45a3ba';
+
+    root.setProperty('--bg', bg);
+    root.setProperty('--card-bg', cardBg);
+    root.setProperty('--text', text);
+    root.setProperty('--text-muted', hint);
+    root.setProperty('--border', border);
+    root.setProperty('--primary', accent);
+    root.setProperty('--primary-light', hexToRgba(accent, 0.12));
 
     document.body.classList.toggle('vk-dark', !!dark);
+}
+
+function pickVKThemeColor(cfg, keys) {
+    for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (cfg[k]) return cfg[k];
+    }
+    return null;
+}
+
+function hexToRgba(hex, alpha) {
+    var c = hexToRgb(hex);
+    return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + alpha + ')';
 }
 
 function applyTelegramTheme() {
