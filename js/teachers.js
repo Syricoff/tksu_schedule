@@ -1,7 +1,6 @@
-import { esc, $, getMonday, fmtDate, formatWeekRange } from './utils.js';
+import { esc, $, $$, fetchJSON, DATA_BASE, getMonday, fmtDate, formatWeekRange } from './utils.js';
 import { storageGet, storageSet } from './storage.js';
 import { parseScheduleData, mergeScheduleData, getDaysForWeek, getWeeksFromData, renderDays } from './renderer.js';
-import { loadMonthsMeta, loadTeachersCatalog, loadTeacherScheduleMonth } from './data-source.js';
 
 // ── State ──
 var state = {
@@ -23,9 +22,9 @@ export function loadTeachersData() {
     var loading = $('#loading');
     if (loading) loading.classList.remove('d-none');
 
-    loadMonthsMeta().then(function (months) {
-        state.availableMonths = months || [];
-        return loadTeachersCatalog();
+    fetchJSON(DATA_BASE + 'meta.json').then(function (meta) {
+        state.availableMonths = meta.months || [];
+        return fetchJSON(DATA_BASE + 'teachers.json');
     }).then(function (data) {
         state.departments = data.departments;
         state.staffData = data.staff;
@@ -156,7 +155,7 @@ function loadTeacherSchedule() {
     }
 
     var promises = months.map(function (my) {
-        return loadTeacherScheduleMonth(state.selectedId, my.month, my.year)
+        return fetchJSON(DATA_BASE + 't/' + encodeURIComponent(state.selectedId) + '/' + my.month + '_' + my.year + '.json')
             .then(function (data) { return { data: data, offline: false }; })
             .catch(function () { return null; });
     });

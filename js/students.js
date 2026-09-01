@@ -1,7 +1,6 @@
-import { esc, $, $$, getMonday, fmtDate, formatWeekRange } from './utils.js';
+import { esc, $, $$, fetchJSON, DATA_BASE, getMonday, fmtDate, formatWeekRange } from './utils.js';
 import { storageGet, storageSet, getSavedGroups, setSavedGroups, isGroupSaved, cacheSchedule, getCachedSchedule, clearGroupCache } from './storage.js';
 import { parseScheduleData, mergeScheduleData, getDaysForWeek, getWeeksFromData, renderDays } from './renderer.js';
-import { loadMonthsMeta, loadStudentsCatalog, loadStudentScheduleMonth } from './data-source.js';
 
 // ── State ──
 var state = {
@@ -19,9 +18,9 @@ var state = {
 
 // ── Public API ──
 export function loadStudentsData() {
-    loadMonthsMeta().then(function (months) {
-        state.availableMonths = months || [];
-        return loadStudentsCatalog();
+    fetchJSON(DATA_BASE + 'meta.json').then(function (meta) {
+        state.availableMonths = meta.months || [];
+        return fetchJSON(DATA_BASE + 'students.json');
     }).then(function (groups) {
         state.groupsData = groups;
         state.loaded = true;
@@ -211,7 +210,7 @@ function updateSaveButton() {
 function disableStudentSelects() {
     $$('#sel-dept, #sel-course, #sel-group').forEach(function (s) { s.disabled = true; });
     var q = $('#stu-search');
-    if (q) { q.disabled = true; q.placeholder = 'Данные недоступны'; }
+    if (q) { q.disabled = true; q.placeholder = 'API недоступен'; }
 }
 
 // ── Недельная навигация ──
@@ -273,7 +272,7 @@ function loadStudentSchedule() {
 
     // Load all available months in parallel and merge
     var promises = months.map(function (my) {
-        return loadStudentScheduleMonth(gid, my.month, my.year)
+        return fetchJSON(DATA_BASE + 's/' + encodeURIComponent(gid) + '/' + my.month + '_' + my.year + '.json')
             .then(function (data) {
                 if (isGroupSaved(gid)) cacheSchedule(gid, my.month, my.year, data);
                 return { data: data, offline: false };

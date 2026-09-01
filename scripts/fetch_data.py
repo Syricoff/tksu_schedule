@@ -16,7 +16,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
-from threading import Lock
+from threading import Lock, local
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -36,11 +36,12 @@ TOKEN_TCH = os.environ.get("TOKEN_TEACHERS", "")
 
 OUT_DIR = Path(os.environ.get("DATA_DIR", "data"))
 MONTHS_AHEAD = int(os.environ.get("MONTHS_AHEAD", "4"))
-WORKERS = int(os.environ.get("WORKERS", "4"))
+WORKERS = int(os.environ.get("WORKERS", "16"))
 MAX_RETRIES = int(os.environ.get("MAX_RETRIES", "4"))
-REQUEST_DELAY = float(os.environ.get("REQUEST_DELAY", "0.15"))
+REQUEST_DELAY = float(os.environ.get("REQUEST_DELAY", "0"))
 
 _print_lock = Lock()
+_thread_local = local()
 
 
 def _make_session():
@@ -59,6 +60,14 @@ def _make_session():
     )
     s.mount("https://", adapter)
     return s
+
+
+def get_session():
+    session = getattr(_thread_local, "session", None)
+    if session is None:
+        session = _make_session()
+        _thread_local.session = session
+    return session
 
 
 def fetch_json(session, url):
@@ -85,17 +94,33 @@ def get_months(count):
     return result
 
 
+def download_catalog(url, label):
+    try:
+        return fetch_json(get_session(), url)
+    except Exception as e:
+        print(f"Критическая ошибка: не удалось скачать каталог {label}: {e}")
+        sys.exit(1)
+
+
+def fetch_schedule(kind, base_url, token, item_id, month, year):
+    if REQUEST_DELAY:
+        time.sleep(REQUEST_DELAY)
+    param = "group_id" if kind == "student" else "staff_id"
+    out_dir = "s" if kind == "student" else "t"
+    url = f"{base_url}?token={token}&{param}={item_id}&month={month}&year={year}"
+    resp = fetch_json(get_session(), url)
+    save(OUT_DIR / out_dir / item_id / f"{month}_{year}.json", resp["data"])
+
+
 def main():
     if not TOKEN_STU or not TOKEN_TCH:
         print("Ошибка: укажите TOKEN_STUDENTS и TOKEN_TEACHERS в .env или переменных окружения")
         sys.exit(1)
 
-    session = _make_session()
-
     # ═══ Проверка доступности API ═══
     print("🔗 Проверка доступности API...")
     try:
-        session.get(f"{API_STU}?token={TOKEN_STU}", timeout=10).raise_for_status()
+        get_session().get(f"{API_STU}?token={TOKEN_STU}", timeout=10).raise_for_status()
         print("   API доступен")
     except Exception as e:
         print(f"❌ API недоступен: {e}")
@@ -107,11 +132,12 @@ def main():
 
     # ═══ Студенты: каталог ═══
     print("📚 Загрузка каталога групп...")
-    try:
-        stu_resp = fetch_json(session, f"{API_STU}?token={TOKEN_STU}")
-    except Exception as e:
-        print(f"Критическая ошибка: не удалось скачать каталог студентов: {e}")
-        sys.exit(1)
+    print("👨‍🏫 Загрузка каталога преподавателей...")
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        stu_future = pool.submit(download_catalog, f"{API_STU}?token={TOKEN_STU}", "студентов")
+        tch_future = pool.submit(download_catalog, f"{API_TCH}?token={TOKEN_TCH}", "преподавателей")
+        stu_resp = stu_future.result()
+        tch_resp = tch_future.result()
 
     groups_data = stu_resp["data"]["groups"]
     save(OUT_DIR / "students.json", groups_data)
@@ -129,46 +155,6 @@ def main():
 
     print(f"   Найдено {len(group_ids)} групп")
 
-    # ═══ Студенты: расписания ═══
-    stu_tasks = []
-    for m, y in months:
-        for gid in group_ids:
-            stu_tasks.append((gid, m, y))
-
-    total_stu = len(stu_tasks)
-    print(f"📅 Загрузка расписаний студентов: {total_stu} запросов ({WORKERS} потоков)...")
-    done = 0
-
-    def fetch_student(args):
-        gid, m, y = args
-        time.sleep(REQUEST_DELAY)
-        url = f"{API_STU}?token={TOKEN_STU}&group_id={gid}&month={m}&year={y}"
-        resp = fetch_json(session, url)
-        save(OUT_DIR / "s" / gid / f"{m}_{y}.json", resp["data"])
-
-    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-        futures = {pool.submit(fetch_student, t): t for t in stu_tasks}
-        for fut in as_completed(futures):
-            done += 1
-            t = futures[fut]
-            try:
-                fut.result()
-            except Exception as e:
-                errors += 1
-                with _print_lock:
-                    print(f"   ⚠ группа {t[0]}: {e}")
-            if done % 100 == 0:
-                with _print_lock:
-                    print(f"   ... {done}/{total_stu}")
-
-    # ═══ Преподаватели: каталог ═══
-    print("👨‍🏫 Загрузка каталога преподавателей...")
-    try:
-        tch_resp = fetch_json(session, f"{API_TCH}?token={TOKEN_TCH}")
-    except Exception as e:
-        print(f"Критическая ошибка: не удалось скачать каталог преподавателей: {e}")
-        sys.exit(1)
-
     tch_data = tch_resp["data"]
     save(OUT_DIR / "teachers.json", {
         "departments": tch_data["departments"],
@@ -183,25 +169,22 @@ def main():
 
     print(f"   Найдено {len(staff_ids)} преподавателей")
 
-    # ═══ Преподаватели: расписания ═══
-    tch_tasks = []
+    # ═══ Расписания ═══
+    schedule_tasks = []
     for m, y in months:
+        for gid in group_ids:
+            schedule_tasks.append(("student", API_STU, TOKEN_STU, gid, m, y))
         for sid in staff_ids:
-            tch_tasks.append((sid, m, y))
+            schedule_tasks.append(("teacher", API_TCH, TOKEN_TCH, sid, m, y))
 
-    total_tch = len(tch_tasks)
-    print(f"📅 Загрузка расписаний преподавателей: {total_tch} запросов ({WORKERS} потоков)...")
+    total_tasks = len(schedule_tasks)
+    total_stu = len(group_ids) * len(months)
+    total_tch = len(staff_ids) * len(months)
+    print(f"📅 Загрузка расписаний: {total_tasks} запросов ({WORKERS} потоков)...")
     done = 0
 
-    def fetch_teacher(args):
-        sid, m, y = args
-        time.sleep(REQUEST_DELAY)
-        url = f"{API_TCH}?token={TOKEN_TCH}&staff_id={sid}&month={m}&year={y}"
-        resp = fetch_json(session, url)
-        save(OUT_DIR / "t" / sid / f"{m}_{y}.json", resp["data"])
-
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-        futures = {pool.submit(fetch_teacher, t): t for t in tch_tasks}
+        futures = {pool.submit(fetch_schedule, *t): t for t in schedule_tasks}
         for fut in as_completed(futures):
             done += 1
             t = futures[fut]
@@ -210,15 +193,17 @@ def main():
             except Exception as e:
                 errors += 1
                 with _print_lock:
-                    print(f"   ⚠ преподаватель {t[0]}: {e}")
+                    kind, _, _, item_id, _, _ = t
+                    subject = "группа" if kind == "student" else "преподаватель"
+                    print(f"   ⚠ {subject} {item_id}: {e}")
             if done % 100 == 0:
                 with _print_lock:
-                    print(f"   ... {done}/{total_tch}")
+                    print(f"   ... {done}/{total_tasks}")
 
     print(f"\n✅ Готово! Данные сохранены в {OUT_DIR}/")
     if errors:
         print(f"⚠ Ошибок: {errors}")
-    print(f"   Студенческих расписаний: {total_stu - errors}")
+    print(f"   Студенческих расписаний: {total_stu}")
     print(f"   Преподавательских расписаний: {total_tch}")
 
     # Сохраняем метаинформацию

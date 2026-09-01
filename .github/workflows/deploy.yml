@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
   schedule:
-    # Обновлять данные каждую неделю по понедельникам в 5:00 UTC (8:00 МСК)
-    - cron: '0 5 * * 1'
+    # Обновлять данные каждый день в 5:00 UTC (8:00 МСК)
+    - cron: '0 5 * * *'
   workflow_dispatch:
     inputs:
       skip_fetch:
