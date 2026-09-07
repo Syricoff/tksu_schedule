@@ -1,5 +1,5 @@
 import { $, $$ } from './utils.js';
-import { storageGet, storageSet, storageInit } from './storage.js';
+import { storageGet, storageSet } from './storage.js';
 import { platformName, platformReady, platformShowBack, platformHideBack } from './platform.js';
 import * as stu from './students.js';
 import * as tch from './teachers.js';
@@ -17,13 +17,12 @@ function switchTab(tabName) {
     var target = $('#tab-' + tabName);
     if (target) target.classList.remove('d-none');
 
-    if (platformName === 'telegram' || platformName === 'vk') {
+    if (platformName === 'telegram') {
         if (tabName === 'teachers') platformShowBack();
         else platformHideBack();
     }
 
-    // Hash navigation is disabled in VK to avoid conflicts with bridge/back history.
-    if (platformName !== 'vk' && window.location.hash.replace('#', '') !== tabName) {
+    if (window.location.hash.replace('#', '') !== tabName) {
         window.location.hash = tabName;
     }
 
@@ -36,14 +35,12 @@ function switchTab(tabName) {
 
 // ── Events ──
 function bindEvents() {
-    if (platformName !== 'vk') {
-        window.addEventListener('hashchange', function () {
-            var tab = window.location.hash.replace('#', '');
-            if ((tab === 'students' || tab === 'teachers') && tab !== activeTab) {
-                switchTab(tab);
-            }
-        });
-    }
+    window.addEventListener('hashchange', function () {
+        var tab = window.location.hash.replace('#', '');
+        if ((tab === 'students' || tab === 'teachers') && tab !== activeTab) {
+            switchTab(tab);
+        }
+    });
 
     // Tab switching
     $$('.tab-btn').forEach(function (btn) {
@@ -198,8 +195,6 @@ function bindEvents() {
 document.addEventListener('DOMContentLoaded', function () {
     platformReady(function () {
         if (activeTab === 'teachers') switchTab('students');
-    }).then(function () {
-        return storageInit();
     }).finally(function () {
         bindEvents();
 

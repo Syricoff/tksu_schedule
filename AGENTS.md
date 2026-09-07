@@ -18,10 +18,10 @@ The frontend is intentionally simple: vanilla JavaScript modules, no framework, 
   - `app.js` entry and event wiring
   - `students.js` / `teachers.js` schedule logic
   - `storage.js` local storage / platform persistence
-  - `platform.js` Telegram / VK / browser abstraction
+  - `platform.js` Telegram / browser abstraction
   - `renderer.js` rendering and formatting
   - `utils.js` date and helper logic
-- Preserve the current platform-aware behavior: Telegram and VK have different back/navigation handling.
+- Preserve the current Telegram/browser platform-aware behavior.
 
 ## Local workflow
 
@@ -58,6 +58,6 @@ python bot.py
 ## Contribution guidance
 
 - Prefer surgical changes over broad refactors.
-- Keep behavior platform-neutral unless a feature explicitly targets Telegram or VK.
+- Keep behavior platform-neutral unless a feature explicitly targets Telegram.
 - If a change affects schedule data flow, inspect both the fetch script and the client render path.
 - If you add new fields to the schedule JSON, confirm both the parser and the UI can handle them without breaking existing views.

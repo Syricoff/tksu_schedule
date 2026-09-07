@@ -1,28 +1,17 @@
 import { $ } from './utils.js';
 
 var tg = window.Telegram && window.Telegram.WebApp;
-var vkBridge = window.vkBridge;
-var query = new URLSearchParams(window.location.search);
 
 export var isTelegram = !!(tg && tg.initData);
-export var isVK = !isTelegram && !!(vkBridge && typeof vkBridge.send === 'function') && (
-    query.has('vk_platform') || query.has('vk_user_id') || query.has('sign')
-);
-export var platformName = isTelegram ? 'telegram' : (isVK ? 'vk' : 'browser');
+export var platformName = isTelegram ? 'telegram' : 'browser';
 
 var backHandler = null;
-var vkBackVisible = false;
-var vkPopStateBound = false;
-var vkHistoryArmed = false;
 
 export function platformReady(onBack) {
     backHandler = onBack || null;
     if (isTelegram) {
         initTelegram();
         return Promise.resolve();
-    }
-    if (isVK) {
-        return initVK();
     }
     document.body.classList.add('browser-mode');
     return Promise.resolve();
@@ -33,24 +22,12 @@ export function platformShowBack() {
         tg.BackButton.show();
         return;
     }
-    if (isVK) {
-        vkBackVisible = true;
-        armVKBackHistory();
-        tryVKSend('VKWebAppEnableSwipeBack');
-        tryVKSend('VKWebAppSetSwipeSettings', { history: true });
-    }
 }
 
 export function platformHideBack() {
     if (isTelegram) {
         tg.BackButton.hide();
         return;
-    }
-    if (isVK) {
-        vkBackVisible = false;
-        disarmVKBackHistory();
-        tryVKSend('VKWebAppDisableSwipeBack');
-        tryVKSend('VKWebAppSetSwipeSettings', { history: false });
     }
 }
 
@@ -73,176 +50,11 @@ function initTelegram() {
     }
 }
 
-function initVK() {
-    document.body.classList.add('miniapp-mode');
-    document.body.classList.add('vk-mode');
-    hideChrome();
-
-    return tryVKSend('VKWebAppInit').then(function () {
-        return tryVKSend('VKWebAppGetConfig').then(function (cfg) {
-            if (cfg) applyVKTheme(cfg);
-        });
-    }).finally(function () {
-        bindVKThemeEvents();
-        bindVKBackEvents();
-    });
-}
-
 function hideChrome() {
     var header = $('#app-header');
     var footer = $('#app-footer');
     if (header) header.style.display = 'none';
     if (footer) footer.style.display = 'none';
-}
-
-function bindVKBackEvents() {
-    if (vkPopStateBound) return;
-    vkPopStateBound = true;
-
-    window.addEventListener('popstate', function () {
-        if (!vkBackVisible || !backHandler) return;
-
-        // Marker is consumed by this popstate; allow immediate re-arm if needed.
-        vkHistoryArmed = false;
-        backHandler();
-
-        // Re-arm history marker when we still need in-app back in VK.
-        if (vkBackVisible) {
-            setTimeout(armVKBackHistory, 0);
-        }
-    });
-}
-
-function bindVKThemeEvents() {
-    if (!vkBridge || typeof vkBridge.subscribe !== 'function') return;
-
-    vkBridge.subscribe(function (event) {
-        if (!event || event.detail == null) return;
-        var type = event.detail.type;
-        if (type === 'VKWebAppUpdateConfig') {
-            applyVKTheme(event.detail.data || {});
-            return;
-        }
-
-        // Fallback for environments where native back events are sent directly by container.
-        if ((type === 'VKWebAppSwipeBack' || type === 'VKWebAppBackButtonPressed') && vkBackVisible && backHandler) {
-            vkHistoryArmed = false;
-            backHandler();
-            if (vkBackVisible) {
-                setTimeout(armVKBackHistory, 0);
-            }
-        }
-    });
-
-}
-
-function armVKBackHistory() {
-    if (!isVK) return;
-    var state = window.history.state || {};
-    if (state && state.__vk_back_marker) {
-        vkHistoryArmed = true;
-        return;
-    }
-
-    try {
-        window.history.pushState({ __vk_back_marker: true }, document.title, window.location.href);
-        vkHistoryArmed = true;
-    } catch (e) {
-        // Ignore browsers with restricted History API.
-    }
-}
-
-function disarmVKBackHistory() {
-    vkHistoryArmed = false;
-    try {
-        var state = window.history.state;
-        if (state && state.__vk_back_marker) {
-            window.history.replaceState({}, document.title, window.location.href);
-        }
-    } catch (e) {
-        // Ignore History API restrictions.
-    }
-}
-
-export function platformStorageGet(key) {
-    if (!isVK) return Promise.resolve(readLocalStorage(key));
-    return tryVKSend('VKWebAppStorageGet', { keys: [key] }).then(function (res) {
-        return unwrapVKStorageValue(res, key);
-    });
-}
-
-export function platformStorageGetMany(keys) {
-    if (!isVK) {
-        var localMap = {};
-        keys.forEach(function (k) { localMap[k] = readLocalStorage(k); });
-        return Promise.resolve(localMap);
-    }
-    return tryVKSend('VKWebAppStorageGet', { keys: keys }).then(function (res) {
-        var out = {};
-        keys.forEach(function (k) { out[k] = unwrapVKStorageValue(res, k); });
-        return out;
-    });
-}
-
-export function platformStorageSet(key, value) {
-    writeLocalStorage(key, value);
-    if (!isVK) return Promise.resolve();
-    return tryVKSend('VKWebAppStorageSet', { key: key, value: String(value) }).then(function () {
-        return;
-    });
-}
-
-export function platformStorageRemove(key) {
-    removeLocalStorage(key);
-    if (!isVK) return Promise.resolve();
-    return tryVKSend('VKWebAppStorageSet', { key: key, value: '' }).then(function () {
-        return;
-    });
-}
-
-function applyVKTheme(cfg) {
-    var root = document.documentElement.style;
-    var scheme = cfg.scheme || '';
-    var appTheme = cfg.appearance || '';
-    var darkSchemes = ['space_gray', 'vkcom_dark', 'client_dark', 'inherit_dark'];
-    var dark = appTheme === 'dark' || scheme.indexOf('dark') !== -1 || darkSchemes.indexOf(scheme) !== -1;
-
-    var bg = pickVKThemeColor(cfg, ['background_color', 'bg_color', 'secondary_bg_color']);
-    var cardBg = pickVKThemeColor(cfg, ['background_secondary', 'secondary_bg_color', 'section_bg_color', 'modal_card_background']);
-    var text = pickVKThemeColor(cfg, ['text_color']);
-    var hint = pickVKThemeColor(cfg, ['hint_color', 'subtitle_text_color']);
-    var border = pickVKThemeColor(cfg, ['separator_color', 'section_separator_color']);
-    var accent = pickVKThemeColor(cfg, ['accent_color', 'button_color', 'link_color']);
-
-    if (!bg) bg = dark ? '#0f1014' : '#f0f2f5';
-    if (!cardBg) cardBg = dark ? '#1b1d23' : '#ffffff';
-    if (!text) text = dark ? '#f1f3f5' : '#212529';
-    if (!hint) hint = dark ? '#98a2b3' : '#6c757d';
-    if (!border) border = dark ? '#2f3440' : '#e3e6ea';
-    if (!accent) accent = dark ? '#6aa7ff' : '#45a3ba';
-
-    root.setProperty('--bg', bg);
-    root.setProperty('--card-bg', cardBg);
-    root.setProperty('--text', text);
-    root.setProperty('--text-muted', hint);
-    root.setProperty('--border', border);
-    root.setProperty('--primary', accent);
-    root.setProperty('--primary-light', hexToRgba(accent, 0.12));
-
-    document.body.classList.toggle('vk-dark', !!dark);
-}
-
-function pickVKThemeColor(cfg, keys) {
-    for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
-        if (cfg[k]) return cfg[k];
-    }
-    return null;
-}
-
-function hexToRgba(hex, alpha) {
-    var c = hexToRgb(hex);
-    return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + alpha + ')';
 }
 
 function applyTelegramTheme() {
@@ -285,61 +97,6 @@ function applyTelegramSafeArea() {
     root.setProperty('--tg-safe-area-inset-right', (sa.right || 0) + 'px');
     root.setProperty('--tg-content-safe-area-inset-top', (csa.top || 0) + 'px');
     root.setProperty('--tg-content-safe-area-inset-bottom', (csa.bottom || 0) + 'px');
-}
-
-function tryVKSend(method, params) {
-    if (!vkBridge || typeof vkBridge.send !== 'function') {
-        return Promise.resolve(null);
-    }
-    return vkBridge.send(method, params || {}).catch(function () {
-        return null;
-    });
-}
-
-function unwrapVKStorageValue(res, key) {
-    if (!res) return null;
-
-    if (Array.isArray(res.keys)) {
-        var row = res.keys.find(function (item) { return item && item.key === key; });
-        if (!row) return null;
-        return row.value == null || row.value === '' ? null : row.value;
-    }
-
-    if (Array.isArray(res.response)) {
-        var item = res.response.find(function (entry) { return entry && entry.key === key; });
-        if (!item) return null;
-        return item.value == null || item.value === '' ? null : item.value;
-    }
-
-    if (Object.prototype.hasOwnProperty.call(res, key)) {
-        return res[key] == null || res[key] === '' ? null : res[key];
-    }
-
-    return null;
-}
-
-function readLocalStorage(key) {
-    try {
-        return localStorage.getItem(key);
-    } catch (e) {
-        return null;
-    }
-}
-
-function writeLocalStorage(key, value) {
-    try {
-        localStorage.setItem(key, String(value));
-    } catch (e) {
-        // ignore quota and private mode errors
-    }
-}
-
-function removeLocalStorage(key) {
-    try {
-        localStorage.removeItem(key);
-    } catch (e) {
-        // ignore private mode errors
-    }
 }
 
 function hexToRgb(hex) {

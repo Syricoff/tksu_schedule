@@ -15,7 +15,7 @@
 body { background: var(--bg); color: var(--text); font-family: 'Segoe UI',system-ui,-apple-system,sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
 main { flex: 1; }
 
-/* ── Mini App mode (Telegram / VK) ── */
+/* ── Mini App mode (Telegram) ── */
 body.miniapp-mode {
     padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
     padding-left: var(--tg-safe-area-inset-left, 0px);
