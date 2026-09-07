@@ -46,7 +46,7 @@ jobs:
         env:
           TOKEN_STUDENTS: ${{ secrets.TOKEN_STUDENTS }}
           TOKEN_TEACHERS: ${{ secrets.TOKEN_TEACHERS }}
-        run: python scripts/fetch_data.py
+        run: python scripts/new_script.py
 
       - name: Skip fetch (manual run)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_fetch == true }}

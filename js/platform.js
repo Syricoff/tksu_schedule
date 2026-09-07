@@ -1,20 +1,49 @@
 import { $ } from './utils.js';
 
-var tg = window.Telegram && window.Telegram.WebApp;
+var tg = null;
 
-export var isTelegram = !!(tg && tg.initData);
-export var platformName = isTelegram ? 'telegram' : 'browser';
+export var isTelegram = false;
+export var platformName = 'browser';
 
 var backHandler = null;
+var telegramLoadPromise = loadTelegramScript();
 
-export function platformReady(onBack) {
+export async function platformReady(onBack) {
     backHandler = onBack || null;
+
+    await telegramLoadPromise;
+    tg = window.Telegram && window.Telegram.WebApp;
+    isTelegram = !!(tg && tg.initData);
+    platformName = isTelegram ? 'telegram' : 'browser';
+
     if (isTelegram) {
         initTelegram();
-        return Promise.resolve();
+        return;
     }
     document.body.classList.add('browser-mode');
-    return Promise.resolve();
+}
+
+function loadTelegramScript() {
+    if (window.Telegram && window.Telegram.WebApp) return Promise.resolve();
+
+    return new Promise(function (resolve) {
+        var script = document.createElement('script');
+        var settled = false;
+        var timeout = setTimeout(finish, 1500);
+
+        function finish() {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            resolve();
+        }
+
+        script.src = 'https://telegram.org/js/telegram-web-app.js';
+        script.async = true;
+        script.onload = finish;
+        script.onerror = finish;
+        document.head.appendChild(script);
+    });
 }
 
 export function platformShowBack() {
