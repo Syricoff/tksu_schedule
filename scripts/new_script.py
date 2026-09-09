@@ -58,7 +58,7 @@ TOKEN_TCH = os.environ.get("TOKEN_TEACHERS", "")
 
 OUT_DIR = Path(os.environ.get("DATA_DIR", "data"))
 
-MONTHS_AHEAD = int(os.environ.get("MONTHS_AHEAD", "4"))
+MONTHS_AHEAD = int(os.environ.get("MONTHS_AHEAD", "1"))
 
 # Количество одновременных соединений.
 # 4-8 обычно значительно безопаснее, чем 16+.

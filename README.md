@@ -53,6 +53,15 @@ bot.py                  — Telegram-бот
 data/                   — (генерируется) статические JSON-файлы
 ```
 
+## Legacy-версия
+
+Старая vanilla JS-версия не удаляется. До завершения миграции она остаётся
+в корневом entrypoint и используется текущим GitHub Pages workflow. После
+переключения production-деплоя frontend-файлы legacy будут сохранены в
+`legacy/` (`index.html`, `styles.css`, `logo.svg`, `js/`) как архивная
+запускаемая версия. Общие `data/`, `scripts/` и Telegram-бот останутся в
+корне проекта.
+
 ## Деплой на GitHub Pages
 
 ### 1. Создайте репозиторий и запушьте

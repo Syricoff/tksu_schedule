@@ -11,6 +11,10 @@ venv/
 .DS_Store
 Thumbs.db
 
+# React/Vite migration workspace
+new/node_modules/
+new/dist/
+
 # Старые файлы
 script.js
 script_p.js
