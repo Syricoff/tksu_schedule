@@ -3,7 +3,7 @@ services:
     build: ./bot
     restart: unless-stopped
     env_file:
-      - .env
+      - stack.env
     volumes:
       - ./data:/app/data
       - ./scripts:/app/scripts
