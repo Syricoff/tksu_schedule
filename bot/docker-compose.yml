@@ -1,12 +1,12 @@
 services:
   bot:
-    build: ./bot
+    build: .
     restart: unless-stopped
     env_file:
-      - .env
+      - ../.env
     volumes:
-      - ./data:/app/data
-      - ./scripts:/app/scripts
+      - ../data:/app/data
+      - ../scripts:/app/scripts
     environment:
       - FETCH_SCRIPT=/app/scripts/new_script.py
       - DATA_DIR=/app/data

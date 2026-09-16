@@ -6,6 +6,12 @@ __pycache__/
 # Окружение
 .env
 venv/
+.venv/
+
+# База данных
+*.db
+*.db-wal
+*.db-shm
 
 # Системные
 .DS_Store

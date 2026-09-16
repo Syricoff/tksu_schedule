@@ -5,7 +5,7 @@
 This repository contains a static schedule app for KSU (КГУ им. К.Э. Циолковского) that runs as:
 
 - a browser app in `index.html` + `js/`
-- a Telegram Mini App / bot in `bot.py`
+- a Telegram Mini App / bot in `bot/` (entrypoint `bot/bot.py` or `bot.py`)
 - a data prefetch pipeline in `scripts/fetch_data.py`
 
 The frontend is intentionally simple: vanilla JavaScript modules, no framework, no build step, and no direct API access from browser code.
