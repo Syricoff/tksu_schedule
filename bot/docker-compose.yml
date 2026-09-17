@@ -2,6 +2,9 @@ services:
   bot:
     build: .
     restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     env_file:
       - ../.env
     volumes:
