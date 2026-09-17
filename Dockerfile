@@ -2,8 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY bot/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip
+
+COPY bot/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir --default-timeout=100 --retries 5 -r requirements.txt
 
 COPY bot/ .
 COPY scripts/ scripts/
