@@ -6,10 +6,9 @@ services:
       - 1.1.1.1
       - 8.8.8.8
     env_file:
-      - stack.env
+      - .env
     volumes:
       - ./data:/app/data
-      - ./scripts:/app/scripts
     environment:
       - FETCH_SCRIPT=/app/scripts/new_script.py
       - DATA_DIR=/app/data

@@ -2,3 +2,4 @@ python-telegram-bot[job-queue]>=21.0,<22.0
 python-dotenv>=1.0,<2.0
 requests>=2.31.0
 tzdata
+aiohttp>=3.11.0

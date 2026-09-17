@@ -75,7 +75,15 @@ ADMIN_ID = next(iter(ADMIN_IDS)) if ADMIN_IDS else None
 AUTO_FETCH_ENABLED = os.environ.get("AUTO_FETCH_ENABLED", "true").lower() in ("true", "1", "yes")
 AUTO_FETCH_TIME = os.environ.get("AUTO_FETCH_TIME", "04:00")
 
-DEFAULT_FETCH_SCRIPT = ROOT_DIR / "scripts" / "new_script.py" if (ROOT_DIR / "scripts" / "new_script.py").exists() else Path("scripts/new_script.py")
+DEFAULT_FETCH_SCRIPT = (
+    BOT_DIR / "scripts" / "new_script.py"
+    if (BOT_DIR / "scripts" / "new_script.py").exists()
+    else (
+        ROOT_DIR / "scripts" / "new_script.py"
+        if (ROOT_DIR / "scripts" / "new_script.py").exists()
+        else Path("scripts/new_script.py")
+    )
+)
 FETCH_SCRIPT = os.environ.get("FETCH_SCRIPT", str(DEFAULT_FETCH_SCRIPT))
 
 TOKEN_STUDENTS = os.environ.get("TOKEN_STUDENTS", "")
@@ -313,7 +321,9 @@ async def trigger_schedule_fetch(app=None) -> tuple[bool, str]:
 
     script_path = Path(FETCH_SCRIPT)
     if not script_path.exists():
-        fallback = ROOT_DIR / "scripts" / "new_script.py"
+        fallback = BOT_DIR / "scripts" / "new_script.py"
+        if not fallback.exists():
+            fallback = ROOT_DIR / "scripts" / "new_script.py"
         if fallback.exists():
             script_path = fallback
         else:
@@ -1254,6 +1264,10 @@ async def post_init(app) -> None:
                 name="check_daily_data_fetch",
             )
         logger.info("JobQueue инициализирован: авто-рассылка и авто-обновление активны.")
+
+        if AUTO_FETCH_ENABLED and not (DATA_DIR / "students.json").exists() and TOKEN_STUDENTS and TOKEN_TEACHERS:
+            logger.info("Файл students.json отсутствует в %s. Запуск первичной загрузки расписания...", DATA_DIR)
+            asyncio.create_task(trigger_schedule_fetch(app))
 
 
 def main() -> None:
