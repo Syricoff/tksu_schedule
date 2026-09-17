@@ -6,7 +6,7 @@ services:
       - 1.1.1.1
       - 8.8.8.8
     env_file:
-      - .env
+      - stack.env
     volumes:
       - ./data:/app/data
     environment:
