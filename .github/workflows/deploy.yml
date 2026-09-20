@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install -r requirements.txt
 
       - name: Fetch schedule data from API
@@ -46,7 +46,7 @@ jobs:
         env:
           TOKEN_STUDENTS: ${{ secrets.TOKEN_STUDENTS }}
           TOKEN_TEACHERS: ${{ secrets.TOKEN_TEACHERS }}
-        run: python scripts/new_script.py
+        run: python scripts/fetch_data.py
 
       - name: Skip fetch (manual run)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_fetch == true }}
@@ -60,12 +60,31 @@ jobs:
           fi
           echo "✅ Данные найдены: $(cat data/meta.json)"
 
-      - name: Prepare site
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Verify and test
         run: |
-          mkdir _site
-          cp index.html styles.css logo.svg _site/
-          cp -r js _site/js
-          cp -r data _site/data
+          npm run typecheck
+          npm run test
+
+      - name: Build web application
+        run: npm run build
+
+      - name: Ensure data and legacy exist in dist
+        run: |
+          if [ ! -d dist/data ]; then
+            cp -r data dist/data
+          fi
+          if [ -d legacy ] && [ ! -d dist/legacy ]; then
+            cp -r legacy dist/legacy
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -73,8 +92,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
-          
+          path: dist
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

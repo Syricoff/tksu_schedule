@@ -17,6 +17,7 @@ interface TeacherSelectorProps {
 export function TeacherSelector({ catalog, selectedId, onSelect }: TeacherSelectorProps) {
   const [departmentId, setDepartmentId] = useState('');
   const [query, setQuery] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const departments = Object.entries(catalog.departments).filter(([id]) => catalog.staff[id]);
   const teachers = Object.entries(catalog.staff).flatMap(([id, members]) => Object.entries(members).map(([teacherId, teacher]) => ({
     id: teacherId,
@@ -43,18 +44,23 @@ export function TeacherSelector({ catalog, selectedId, onSelect }: TeacherSelect
       {visibleTeachers.slice(0, 15).map((teacher) => <button key={`${teacher.departmentId}-${teacher.id}`} onClick={() => selectTeacher(teacher)}>{teacher.name}<small>{teacher.departmentName}</small></button>)}
       {!visibleTeachers.length && <span>Ничего не найдено</span>}
     </div>}
-    <div className="sidebar-section"><label className="field-label sidebar-title" htmlFor="teacher-department">Кафедра</label>
-    <select id="teacher-department" className="form-select" value={departmentId} onChange={(event) => setDepartmentId(event.target.value)}>
-      <option value="">Все кафедры</option>
-      {departments.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-    </select></div>
-    <div className="sidebar-section"><label className="field-label sidebar-title" htmlFor="teacher">Преподаватель</label>
-    <select id="teacher" className="form-select" value={selectedId ?? ''} onChange={(event) => {
-      const teacher = teachers.find((item) => item.id === event.target.value);
-      if (teacher) selectTeacher(teacher);
-    }}>
-      <option value="">Выберите преподавателя</option>
-      {visibleTeachers.map((teacher) => <option key={`${teacher.departmentId}-${teacher.id}`} value={teacher.id}>{teacher.name}</option>)}
-    </select></div>
+    <button className="mobile-filter-toggle" type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
+      <span>Выбор из каталога</span><span aria-hidden="true">{filtersOpen ? '−' : '+'}</span>
+    </button>
+    <div className={`catalog-filters ${filtersOpen ? 'open' : ''}`}>
+      <div className="sidebar-section"><label className="field-label sidebar-title" htmlFor="teacher-department">Кафедра</label>
+      <select id="teacher-department" className="form-select" value={departmentId} onChange={(event) => setDepartmentId(event.target.value)}>
+        <option value="">Все кафедры</option>
+        {departments.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+      </select></div>
+      <div className="sidebar-section"><label className="field-label sidebar-title" htmlFor="teacher">Преподаватель</label>
+      <select id="teacher" className="form-select" value={selectedId ?? ''} onChange={(event) => {
+        const teacher = teachers.find((item) => item.id === event.target.value);
+        if (teacher) selectTeacher(teacher);
+      }}>
+        <option value="">Выберите преподавателя</option>
+        {visibleTeachers.map((teacher) => <option key={`${teacher.departmentId}-${teacher.id}`} value={teacher.id}>{teacher.name}</option>)}
+      </select></div>
+    </div>
   </aside>;
 }

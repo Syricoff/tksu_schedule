@@ -1,25 +1,23 @@
 # Расписание КГУ — Telegram Mini App + Веб-сайт
 
-Приложение для просмотра расписания КГУ им. К.Э. Циолковского.  
-Работает как **обычный сайт** и **Telegram Mini App**.
+Современное веб-приложение для просмотра расписания КГУ им. К.Э. Циолковского.  
+Работает как **веб-сайт** и **Telegram Mini App**.
 
 ## Возможности
 
-- **Расписание студентов** — выбор факультета, курса, группы; быстрый поиск по названию группы
-- **Расписание преподавателей** — выбор кафедры, преподавателя; поиск по ФИО
-- **Недельная пагинация** — просмотр расписания по неделям с быстрой навигацией между ними
-- **Сохранённые группы** — закладки на часто используемые группы
-- **Telegram Mini App** — адаптация под тему и интерфейс Telegram
-- **Офлайн-режим** — кэширование расписания сохранённых групп в localStorage
-- **Автообновление** — данные обновляются ежедневно через GitHub Actions
+- **Расписание студентов** — выбор факультета, курса, группы; мгновенный фильтр и поиск по названию группы
+- **Расписание преподавателей** — выбор института/кафедры, преподавателя; поиск по ФИО
+- **Недельная навигация** — просмотр расписания по неделям с быстрым переключением и определением текущей недели
+- **Сохранённые группы** — быстрый доступ к избранным группам с запоминанием в `localStorage`
+- **Telegram Mini App** — бесшовная интеграция с темой оформления Telegram (акцентные цвета, переменные окружения, закрытие)
+- **Офлайн-режим** — локальное кэширование загруженных расписаний
+- **Автообновление** — данные предварительно скачиваются ежедневно через GitHub Actions и бота
 
 ## Архитектура безопасности
 
 **API-токены никогда не попадают в клиентский код.**
 
-Данные загружаются с API заранее скриптом `scripts/fetch_data.py` и сохраняются
-как статические JSON-файлы. Клиент читает только эти файлы — без
-прямых обращений к API и без каких-либо секретов в браузере.
+Данные загружаются с API заранее скриптом `scripts/fetch_data.py` (с контролем частоты запросов, обработкой 429 и атомарной записью) и сохраняются как статические JSON-файлы в `data/`. Клиент читает только эти файлы — без прямых обращений к закрытому API и без секретов в браузере.
 
 ```
 ┌─────────────┐    токены (secrets)    ┌──────────┐     JSON     ┌──────────┐
@@ -36,78 +34,88 @@
 ## Структура проекта
 
 ```
-index.html              — единая HTML-страница (SPA)
-js/                     — клиентская логика (ES-модули, vanilla JS)
-  app.js                — точка входа: табы, события, инициализация
-  utils.js              — утилиты, константы, работа с датами/неделями
-  storage.js            — localStorage: кэш, сохранённые группы
-  platform.js           — платформенный слой (Telegram / Browser)
-  telegram.js           — legacy-модуль Telegram (для обратной совместимости)
-  renderer.js           — парсинг и рендер расписания по дням
-  students.js           — логика вкладки студентов + недельная навигация
-  teachers.js           — логика вкладки преподавателей + недельная навигация
-styles.css              — стили + режим Telegram Mini App
-scripts/fetch_data.py   — сборщик данных (запускается GitHub Actions)
+src/                    — исходный код основного приложения (React 19 + TypeScript + Vite)
+  app/                  — корневой компонент (App.tsx), стили (app.css)
+  components/           — UI-компоненты (студенты, преподаватели, расписание)
+  data/                 — адаптеры источников данных (StaticDataSource, типы, нормализация)
+  platform/             — слой платформы (Telegram WebApp / Browser)
+  storage/              — хранилище и кэш расписания
+  lib/                  — аналитика, даты, вспомогательные модули
+  main.tsx              — точка входа React
+public/                 — статические ресурсы (логотип, иконки)
+index.html              — HTML-шаблон для сборщика Vite
+package.json            — зависимости и скрипты сборщика
+vite.config.ts          — конфигурация Vite (раздача /data и /legacy, автокопирование в dist)
+legacy/                 — архивная vanilla JS-версия (index.html, styles.css, js/, README.md)
+scripts/
+  fetch_data.py         — основной скрипт загрузки данных (rate-limit, backoff, atomic write)
+  legacy/               — архивные версии скриптов загрузки (v1 sync, v2 async)
 bot/                    — Telegram-бот (bot.py, db.py, Dockerfile, docker-compose.yml)
 bot.py                  — входная точка для запуска бота
-.github/workflows/      — CI/CD: сборка + деплой
+.github/workflows/      — CI/CD: скачивание данных, тесты, сборка Vite и деплой на GitHub Pages
 data/                   — (генерируется) статические JSON-файлы и bot.db
 ```
 
-## Legacy-версия
-
-Старая vanilla JS-версия не удаляется. До завершения миграции она остаётся
-в корневом entrypoint и используется текущим GitHub Pages workflow. После
-переключения production-деплоя frontend-файлы legacy будут сохранены в
-`legacy/` (`index.html`, `styles.css`, `logo.svg`, `js/`) как архивная
-запускаемая версия. Общие `data/`, `scripts/` и Telegram-бот останутся в
-корне проекта.
-
-## Деплой на GitHub Pages
-
-### 1. Создайте репозиторий и запушьте
-
-```bash
-git init && git add . && git commit -m "init"
-git remote add origin git@github.com:ВАШ_ЛОГИН/tksu_schedule.git
-git push -u origin main
-```
-
-### 2. Добавьте секреты в репозиторий
-
-Откройте **Settings → Secrets and variables → Actions → New repository secret** и добавьте:
-
-| Секрет           | Значение                                     |
-|-----------------|----------------------------------------------|
-| `TOKEN_STUDENTS` | `dddddddddddddddddddddddddddddddddddd`      |
-| `TOKEN_TEACHERS` | `bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`      |
-
-### 3. Включите GitHub Pages
-
-**Settings → Pages → Source** → выберите **GitHub Actions**.
-
-### 4. Запустите деплой
-
-Деплой произойдёт автоматически при пуше. Также можно запустить вручную:
-**Actions → Deploy to GitHub Pages → Run workflow**.
-
-Данные обновляются автоматически каждый день в 8:00 МСК (cron).
-
-Результат: `https://ваш-логин.github.io/tksu_schedule/`
-
 ## Локальная разработка
 
+### Веб-приложение (React + Vite)
+
 ```bash
+# 1. Установка зависимостей
+npm install
+
+# 2. Запуск локального сервера разработки (http://localhost:5173)
+npm run dev
+
+# 3. Проверка типов и тестов
+npm run typecheck
+npm run test
+
+# 4. Сборка production-версии в dist/
+npm run build
+
+# 5. Просмотр собранной версии
+npm run preview
+```
+
+### Загрузка данных расписания
+
+```bash
+# Настройка Python-окружения
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
 # Скопируйте .env.example → .env и заполните токены
 cp .env.example .env
 
 # Скачайте данные локально
-pip install python-dotenv
 python scripts/fetch_data.py
-
-# Откройте index.html через любой локальный сервер
-python -m http.server 8080
 ```
+
+## Архивный интерфейс (Legacy)
+
+Прежняя версия на чистом HTML/JS сохранена в каталоге `legacy/`.  
+При локальной сборке или деплое на GitHub Pages она доступна по относительному адресу `/legacy/`:
+- В режиме разработки: `http://localhost:5173/legacy/`
+- На GitHub Pages: `https://ваш-логин.github.io/tksu_schedule/legacy/`
+
+Подробнее см. в [legacy/README.md](file:///Users/syricoff/Documents/Projects/tksu_schedule/legacy/README.md).
+
+## Деплой на GitHub Pages
+
+Workflow в `.github/workflows/deploy.yml` автоматически:
+1. Запускает `python scripts/fetch_data.py` с использованием секретов репозитория;
+2. Проверяет корректность выгрузки в `data/`;
+3. Выполняет `npm ci`, `npm run typecheck` и `npm run test`;
+4. Собирает оптимизированный production-бандл через `npm run build` в каталог `dist/`;
+5. Публикует единый сайт с современным интерфейсом на `/` и архивной версией на `/legacy/`.
+
+### Настройка репозитория:
+1. В **Settings → Secrets and variables → Actions** добавьте секреты:
+   - `TOKEN_STUDENTS`
+   - `TOKEN_TEACHERS`
+2. В **Settings → Pages → Source** выберите **GitHub Actions**.
 
 ## Telegram-бот
 
@@ -115,14 +123,12 @@ python -m http.server 8080
 2. Заполните `.env` на основе `.env.example` (`BOT_TOKEN`, `WEBAPP_URL`, `TOKEN_STUDENTS`, `TOKEN_TEACHERS`)
 3. Запустите:
    ```bash
-   pip install -r bot/requirements.txt
-   python bot/bot.py
-   # или: python bot.py
+   pip install -r requirements.txt
+   python bot.py
    ```
    Или через Docker Compose:
    ```bash
    docker compose up -d --build
-   # или из папки бота: cd bot && docker compose up -d --build
    ```
 
 ### Возможности бота

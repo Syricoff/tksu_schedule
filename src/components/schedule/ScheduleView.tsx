@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BookOpen, BookMarked, MapPin, UserRound, UsersRound } from 'lucide-react';
 import type { ParsedSchedule } from '../../data/normalize';
 import { getDaysForWeek, getMonday, getWeeksFromData } from '../../data/normalize';
+import { getPlatform } from '../../platform/platform';
 
 interface ScheduleViewProps {
   schedule: ParsedSchedule;
@@ -32,12 +33,18 @@ export function ScheduleView({ schedule, currentWeek, onWeekChange }: ScheduleVi
       .filter((groupName): groupName is string => Boolean(groupName));
   }
   function goToToday() {
+    getPlatform().haptic('selection');
     const today = getMonday(new Date()).getTime();
     const closest = weeks.reduce((candidate, week) => (
       Math.abs(week.getTime() - today) < Math.abs(candidate.getTime() - today) ? week : candidate
     ), weeks[0] ?? getMonday(new Date()));
     onWeekChange(closest);
     setScrollRequest((request) => request + 1);
+  }
+
+  function handleWeekStep(nextWeek: Date) {
+    getPlatform().haptic('selection');
+    onWeekChange(nextWeek);
   }
 
   useEffect(() => {
@@ -47,9 +54,9 @@ export function ScheduleView({ schedule, currentWeek, onWeekChange }: ScheduleVi
   }, [currentWeek, scrollRequest]);
   return <section className="schedule-panel">
     <div className="schedule-nav"><div className="schedule-nav-row">
-      <button className="nav-btn" disabled={weekIndex <= 0} onClick={() => onWeekChange(weeks[weekIndex - 1])}>←</button>
+      <button className="nav-btn" disabled={weekIndex <= 0} onClick={() => handleWeekStep(weeks[weekIndex - 1])}>←</button>
       <strong>{weekLabel(currentWeek)}</strong>
-      <button className="nav-btn" disabled={weekIndex < 0 || weekIndex >= weeks.length - 1} onClick={() => onWeekChange(weeks[weekIndex + 1])}>→</button>
+      <button className="nav-btn" disabled={weekIndex < 0 || weekIndex >= weeks.length - 1} onClick={() => handleWeekStep(weeks[weekIndex + 1])}>→</button>
       <button className="today-btn" onClick={goToToday}>Сегодня</button>
     </div></div>
     {!days.length && <p className="empty-state">На этой неделе нет занятий.</p>}

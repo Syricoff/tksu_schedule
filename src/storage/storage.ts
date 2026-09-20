@@ -1,3 +1,5 @@
+import { getPlatform } from '../platform/platform';
+
 export const storageKeys = {
   activeTab: 'active_tab',
   studentGroup: 'stu_group',
@@ -19,10 +21,48 @@ export function writeStorage(key: string, value: string): void {
   } catch {
     // Storage may be disabled or full; the app remains usable without persistence.
   }
+
+  // Also sync to Telegram CloudStorage if available
+  const cloudStorage = getPlatform().getCloudStorage();
+  if (cloudStorage) {
+    try {
+      cloudStorage.setItem(key, value);
+    } catch {
+      // Ignore cloud storage failure
+    }
+  }
 }
 
 export function readJson<T>(key: string, fallback: T): T {
   const value = readStorage(key);
   if (!value) return fallback;
-  try { return JSON.parse(value) as T; } catch { return fallback; }
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export function syncCloudStorage(onSynced?: (updatedKeys: string[]) => void): void {
+  const cloudStorage = getPlatform().getCloudStorage();
+  if (!cloudStorage) return;
+
+  const keys = Object.values(storageKeys);
+  cloudStorage.getItems(keys, (err, values) => {
+    if (err || !values) return;
+    const updated: string[] = [];
+    for (const [k, v] of Object.entries(values)) {
+      if (v && v !== readStorage(k)) {
+        try {
+          localStorage.setItem(k, v);
+          updated.push(k);
+        } catch {
+          // ignore
+        }
+      }
+    }
+    if (updated.length > 0 && onSynced) {
+      onSynced(updated);
+    }
+  });
 }

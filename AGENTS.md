@@ -2,62 +2,68 @@
 
 ## Project overview
 
-This repository contains a static schedule app for KSU (КГУ им. К.Э. Циолковского) that runs as:
+This repository contains a schedule app for KSU (КГУ им. К.Э. Циолковского) that runs as:
 
-- a browser app in `index.html` + `js/`
-- a Telegram Mini App / bot in `bot/` (entrypoint `bot/bot.py` or `bot.py`)
-- a data prefetch pipeline in `scripts/fetch_data.py`
+- a modern web application in `src/` (React 19 + TypeScript + Vite)
+- an archived legacy static app in `legacy/` (vanilla HTML/JS/CSS)
+- a Telegram Mini App / bot in `bot/` (entrypoint `bot.py` or `bot/bot.py`)
+- a reliable data prefetch pipeline in `scripts/fetch_data.py`
 
-The frontend is intentionally simple: vanilla JavaScript modules, no framework, no build step, and no direct API access from browser code.
+The primary frontend is built with React 19, TypeScript, and Vite, deployed automatically to GitHub Pages via `.github/workflows/deploy.yml`.
 
 ## Key conventions
 
 - Do not expose API tokens or secrets in client-side code.
-- Treat `data/` as generated content. Prefer updating the fetch pipeline rather than editing JSON by hand.
-- Keep the front-end logic aligned with the existing module split in `js/`:
-  - `app.js` entry and event wiring
-  - `students.js` / `teachers.js` schedule logic
-  - `storage.js` local storage / platform persistence
-  - `platform.js` Telegram / browser abstraction
-  - `renderer.js` rendering and formatting
-  - `utils.js` date and helper logic
-- Preserve the current Telegram/browser platform-aware behavior.
+- Treat `data/` as generated content. Prefer updating the fetch pipeline (`scripts/fetch_data.py`) rather than editing JSON by hand.
+- Frontend architecture in `src/`:
+  - `src/app/`: `App.tsx` (navigation & tabs), `app.css` (design system & Telegram theming)
+  - `src/components/`: `students/`, `teachers/`, `schedule/` UI components
+  - `src/data/`: data source interfaces (`dataSource.ts`, `staticDataSource.ts`, `normalize.ts`, `types.ts`)
+  - `src/platform/`: platform detection and abstraction (`platform.ts`, `telegram.ts`)
+  - `src/storage/`: typed local storage and offline cache (`storage.ts`, `scheduleCache.ts`)
+  - `src/lib/`: dates, error handling, analytics
+- Legacy frontend in `legacy/`:
+  - Kept for backward compatibility and archival reference
+  - Uses `export var DATA_BASE = '../data/'` to resolve schedule JSONs
+  - Built into `dist/legacy` during production bundle
+- Preserve Telegram/browser platform-aware behavior.
 
 ## Local workflow
 
 ```bash
-# create or activate environment
+# 1. Install Node dependencies and start Vite dev server
+npm install
+npm run dev
+
+# 2. Run TypeScript checks and Vitest suite
+npm run typecheck
+npm run test
+
+# 3. Production build
+npm run build
+npm run preview
+
+# 4. Data pipeline (Python 3.12+)
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-
-# refresh static data from API
 python scripts/fetch_data.py
 
-# run local web app
-python -m http.server 8080
-
-# run Telegram bot
+# 5. Run Telegram bot
 python bot.py
 ```
 
 ## Important project-specific rules
 
-- `scripts/fetch_data.py` reads secrets from environment variables or `.env`; the browser only reads static JSON files.
+- `scripts/fetch_data.py` reads secrets from `.env` or environment variables; the web application only reads static JSON files from `data/`.
 - `bot.py` expects `BOT_TOKEN` and `WEBAPP_URL` to exist in the environment.
-- The GitHub Pages workflow in `.github/workflows/deploy.yml` fetches data before deploy and expects `TOKEN_STUDENTS` and `TOKEN_TEACHERS` secrets.
-- There is no app build system or test suite in this repo; validate changes with direct, targeted checks and the existing runtime behavior.
+- The GitHub Pages workflow in `.github/workflows/deploy.yml` fetches data before deploy, executes `typecheck` and `test`, builds Vite into `dist/`, and publishes `dist`.
+- Always run `npm run typecheck` and `npm run test` before committing frontend changes.
 
 ## Files to inspect first
 
-- `README.md` for deployment and product intent
-- `js/app.js` for app bootstrapping and event flow
-- `scripts/fetch_data.py` for data source and caching behavior
-- `bot.py` for bot commands and schedule text output
-
-## Contribution guidance
-
-- Prefer surgical changes over broad refactors.
-- Keep behavior platform-neutral unless a feature explicitly targets Telegram.
-- If a change affects schedule data flow, inspect both the fetch script and the client render path.
-- If you add new fields to the schedule JSON, confirm both the parser and the UI can handle them without breaking existing views.
+- `README.md` for product and deployment documentation
+- `src/app/App.tsx` for main frontend state and tab routing
+- `src/platform/telegram.ts` for Telegram Mini App integration
+- `scripts/fetch_data.py` for API data prefetch with token bucket rate limiting
+- `bot.py` and `bot/bot.py` for bot commands and notifications

@@ -10,5 +10,5 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      - FETCH_SCRIPT=/app/scripts/new_script.py
+      - FETCH_SCRIPT=/app/scripts/fetch_data.py
       - DATA_DIR=/app/data

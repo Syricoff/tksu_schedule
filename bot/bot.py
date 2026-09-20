@@ -76,12 +76,16 @@ AUTO_FETCH_ENABLED = os.environ.get("AUTO_FETCH_ENABLED", "true").lower() in ("t
 AUTO_FETCH_TIME = os.environ.get("AUTO_FETCH_TIME", "04:00")
 
 DEFAULT_FETCH_SCRIPT = (
-    BOT_DIR / "scripts" / "new_script.py"
-    if (BOT_DIR / "scripts" / "new_script.py").exists()
+    BOT_DIR / "scripts" / "fetch_data.py"
+    if (BOT_DIR / "scripts" / "fetch_data.py").exists()
     else (
-        ROOT_DIR / "scripts" / "new_script.py"
-        if (ROOT_DIR / "scripts" / "new_script.py").exists()
-        else Path("scripts/new_script.py")
+        ROOT_DIR / "scripts" / "fetch_data.py"
+        if (ROOT_DIR / "scripts" / "fetch_data.py").exists()
+        else (
+            BOT_DIR / "scripts" / "new_script.py"
+            if (BOT_DIR / "scripts" / "new_script.py").exists()
+            else Path("scripts/fetch_data.py")
+        )
     )
 )
 FETCH_SCRIPT = os.environ.get("FETCH_SCRIPT", str(DEFAULT_FETCH_SCRIPT))
@@ -321,7 +325,11 @@ async def trigger_schedule_fetch(app=None) -> tuple[bool, str]:
 
     script_path = Path(FETCH_SCRIPT)
     if not script_path.exists():
-        fallback = BOT_DIR / "scripts" / "new_script.py"
+        fallback = BOT_DIR / "scripts" / "fetch_data.py"
+        if not fallback.exists():
+            fallback = ROOT_DIR / "scripts" / "fetch_data.py"
+        if not fallback.exists():
+            fallback = BOT_DIR / "scripts" / "new_script.py"
         if not fallback.exists():
             fallback = ROOT_DIR / "scripts" / "new_script.py"
         if fallback.exists():

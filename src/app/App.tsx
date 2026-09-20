@@ -6,13 +6,14 @@ import { createDataSource } from '../data/dataSource';
 import { getMonday, mergeScheduleData, parseScheduleData, type ParsedSchedule } from '../data/normalize';
 import type { ScheduleKind, ScheduleMeta, StudentCatalog, StudentGroup, TeacherCatalog } from '../data/types';
 import { cacheSchedule, getCachedSchedule } from '../storage/scheduleCache';
-import { readJson, readStorage, storageKeys, writeStorage } from '../storage/storage';
-import { createPlatform } from '../platform/platform';
+import { readJson, readStorage, storageKeys, syncCloudStorage, writeStorage } from '../storage/storage';
+import { getPlatform } from '../platform/platform';
+import { trackGroupSelect, trackTeacherSelect } from '../lib/analytics';
 import './app.css';
 
 type Tab = 'students' | 'teachers';
 const dataSource = createDataSource();
-const platform = createPlatform();
+const platform = getPlatform();
 
 function readTab(): Tab {
   const hash = window.location.hash.slice(1);
@@ -52,15 +53,31 @@ export function App() {
 
   useEffect(() => {
     platform.ready();
-    platform.setBackHandler(() => setTab('students'));
+    syncCloudStorage((updatedKeys) => {
+      if (updatedKeys.includes(storageKeys.activeTab)) {
+        setTab(readTab());
+      }
+      if (updatedKeys.includes(storageKeys.savedGroups)) {
+        setSavedGroups(readJson(storageKeys.savedGroups, []));
+      }
+    });
+
     const onHashChange = () => setTab(readTab());
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
   useEffect(() => {
-    if (tab === 'teachers') platform.showBackButton();
-    else platform.hideBackButton();
+    if (tab === 'teachers') {
+      platform.showBackButton();
+      platform.setBackHandler(() => {
+        platform.haptic('selection');
+        setTab('students');
+      });
+    } else {
+      platform.hideBackButton();
+      platform.setBackHandler(null);
+    }
     if (window.location.hash !== `#${tab}`) window.location.hash = tab;
   }, [tab]);
 
@@ -117,26 +134,51 @@ export function App() {
 
   const groups = students ? flattenGroups(students) : [];
   const allSavedGroups = savedGroups.map((saved) => groups.find((group) => group.id === saved.id) ?? saved);
-  function selectGroup(group: StudentGroup) { setSelectedGroup(group); writeStorage(storageKeys.studentGroup, group.id); }
+
+  function switchTab(nextTab: Tab) {
+    if (nextTab !== tab) {
+      platform.haptic('selection');
+      setTab(nextTab);
+    }
+  }
+
+  function selectGroup(group: StudentGroup) {
+    platform.haptic('impact-light');
+    setSelectedGroup(group);
+    writeStorage(storageKeys.studentGroup, group.id);
+    trackGroupSelect(group.name);
+  }
+
   function toggleSaved(group: StudentGroup) {
+    platform.haptic('success');
     const next = savedGroups.some((item) => item.id === group.id) ? savedGroups.filter((item) => item.id !== group.id) : [...savedGroups, group];
-    setSavedGroups(next); writeStorage(storageKeys.savedGroups, JSON.stringify(next));
+    setSavedGroups(next);
+    writeStorage(storageKeys.savedGroups, JSON.stringify(next));
   }
 
   function selectTeacher(teacher: SelectedTeacher) {
+    platform.haptic('impact-light');
     setSelectedTeacher(teacher);
     writeStorage(storageKeys.teacher, teacher.id);
+    trackTeacherSelect(teacher.name);
   }
 
   return <main className="app-shell">
     <header className="app-header"><div className="app-header-inner"><span className="header-logo" role="img" aria-label="Логотип КГУ" /><div><h1>Расписание</h1><small>КГУ им. К.Э. Циолковского</small></div></div></header>
     <p className="intro">Выберите группу или преподавателя, чтобы увидеть занятия по неделям.</p>
-    <nav className="tab-switcher" aria-label="Тип расписания"><button className={`tab-btn ${tab === 'students' ? 'active' : ''}`} onClick={() => setTab('students')}>Обучающиеся</button><button className={`tab-btn ${tab === 'teachers' ? 'active' : ''}`} onClick={() => setTab('teachers')}>Преподаватели</button></nav>
+    <nav className="tab-switcher" aria-label="Тип расписания">
+      <button className={`tab-btn ${tab === 'students' ? 'active' : ''}`} onClick={() => switchTab('students')}>Обучающиеся</button>
+      <button className={`tab-btn ${tab === 'teachers' ? 'active' : ''}`} onClick={() => switchTab('teachers')}>Преподаватели</button>
+    </nav>
     {error && <p className="error" role="alert">{error}</p>}
     {tab === 'students' && students && <div className="workspace"><StudentSelector groups={groups} selectedId={selectedGroup?.id ?? null} savedGroups={allSavedGroups} onSelect={selectGroup} onToggleSaved={toggleSaved} /><div className="schedule-area">{loadingSchedule && <p className="empty-state">Загрузка расписания...</p>}{!loadingSchedule && schedule && <ScheduleView schedule={schedule} currentWeek={currentWeek} onWeekChange={setCurrentWeek} />}{!loadingSchedule && !schedule && !error && <p className="empty-state">Выберите группу для просмотра расписания.</p>}</div></div>}
     {tab === 'students' && !students && !error && <p className="empty-state">Загрузка каталога групп...</p>}
     {tab === 'teachers' && teachers && <div className="workspace"><TeacherSelector catalog={teachers} selectedId={selectedTeacher?.id ?? null} onSelect={selectTeacher} /><div className="schedule-area">{loadingSchedule && <p className="empty-state">Загрузка расписания...</p>}{!loadingSchedule && schedule && <ScheduleView schedule={schedule} currentWeek={currentWeek} onWeekChange={setCurrentWeek} />}{!loadingSchedule && !schedule && !error && <p className="empty-state">Выберите преподавателя для просмотра расписания.</p>}</div></div>}
     {tab === 'teachers' && !teachers && !error && <p className="empty-state">Загрузка каталога преподавателей...</p>}
-    <footer className="app-footer"><span>© 2026 — КГУ им. К.Э. Циолковского</span><span>Создано — <a href="https://syricoff.github.io/" target="_blank" rel="noreferrer">Syricoff</a></span>{meta && <span className="footer-data">Данные обновлены {meta.generated}</span>}</footer>
+    <footer className="app-footer">
+      <span>© 2026 — КГУ им. К.Э. Циолковского</span>
+      <span>Создано — <a href="https://syricoff.github.io/" onClick={(e) => { e.preventDefault(); platform.openExternalLink('https://syricoff.github.io/'); }}>Syricoff</a></span>
+      {meta && <span className="footer-data">Данные обновлены {meta.generated}</span>}
+    </footer>
   </main>;
 }

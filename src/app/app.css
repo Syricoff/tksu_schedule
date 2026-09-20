@@ -73,7 +73,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .tab-btn.active { background: var(--primary); color: #fff; box-shadow: var(--shadow-sm); }
 .tab-btn:not(.active):hover { background: var(--primary-light); color: var(--primary); }
 .workspace { grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); gap: 16px; margin-top: 16px; }
-.sidebar-panel { position: sticky; top: 1rem; display: block; border-radius: var(--radius); background: var(--card-bg); box-shadow: var(--shadow-sm); padding: 1.25rem; }
+.sidebar-panel { display: block; border-radius: var(--radius); background: var(--card-bg); box-shadow: var(--shadow-sm); padding: 1.25rem; }
 .sidebar-section { margin-bottom: 1rem; }
 .sidebar-section:last-child { margin-bottom: 0; }
 .sidebar-title { display: block; margin: 0 0 .4rem; color: var(--text-muted); font-size: .78rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
@@ -269,7 +269,9 @@ body { background: var(--bg); color: var(--text); }
 .workspace { grid-template-columns: 260px minmax(0, 1fr); gap: 18px; }
 .day-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
 .day-card { margin-bottom: 0; }
-.workspace > .sidebar-panel { position: sticky; top: 18px; align-self: start; z-index: 4; box-shadow: 0 10px 26px rgba(105,64,45,.11); }
+@media (min-width: 901px) {
+	.workspace > .sidebar-panel { position: sticky; top: 18px; align-self: start; z-index: 4; box-shadow: 0 10px 26px rgba(105,64,45,.11); }
+}
 .lesson-title { display: flex; align-items: flex-start; gap: 7px; }
 .lesson-title svg { flex: 0 0 auto; margin-top: 2px; color: var(--coral); }
 .lesson-info span { gap: 5px; }
@@ -283,7 +285,8 @@ body { background: var(--bg); color: var(--text); }
 @media (max-width: 900px) {
 	.day-grid { grid-template-columns: 1fr; }
 	.workspace { grid-template-columns: 1fr; }
-	.sidebar-panel { position: static; order: 1; }
+	.workspace > .sidebar-panel,
+	.sidebar-panel { position: static !important; top: auto !important; order: 1; }
 	.schedule-area { order: 2; }
 	.mobile-filter-toggle { display: flex; }
 	.catalog-filters { display: none; }
@@ -310,4 +313,244 @@ body { background: var(--bg); color: var(--text); }
 	.lesson-discipline { font-size: .84rem; }
 	.lesson-info { gap: 7px; font-size: .7rem; }
 	.lesson-info span + span::before { margin-right: .35rem; }
+}
+
+/* ── Telegram Mini App (TMA) Mode ── */
+body.miniapp-mode {
+	padding-top: calc(var(--tg-safe-top, 0px) + var(--tg-content-safe-top, 0px));
+	padding-bottom: var(--tg-safe-bottom, 0px);
+	padding-left: var(--tg-safe-left, 0px);
+	padding-right: var(--tg-safe-right, 0px);
+	background-color: var(--bg);
+	min-height: 100vh;
+	box-sizing: border-box;
+}
+
+body.miniapp-mode .app-header,
+body.miniapp-mode .intro,
+body.miniapp-mode .app-footer {
+	display: none !important;
+}
+
+body.miniapp-mode .app-shell {
+	width: 100%;
+	max-width: 100%;
+	padding: 10px 14px 28px;
+	box-sizing: border-box;
+}
+
+body.miniapp-mode .workspace {
+	margin-top: 10px;
+}
+
+body.miniapp-mode .workspace > .sidebar-panel,
+body.miniapp-mode .sidebar-panel {
+	position: static !important;
+	top: auto !important;
+}
+
+/* Telegram theme variable integration */
+body.tg-mode {
+	--bg: var(--tg-bg, #fbf5ef);
+	--card-bg: var(--tg-card-bg, #fffdfa);
+	--text: var(--tg-text, #3b2924);
+	--text-muted: var(--tg-muted, #88766e);
+	--border: var(--tg-border, #eadbd2);
+	--ink: var(--tg-text, #4a3028);
+	--primary: var(--tg-accent, #2481cc);
+	--coral: var(--tg-accent, #2481cc);
+	background-color: var(--bg);
+	color: var(--text);
+}
+
+body.tg-mode .tab-switcher {
+	background: var(--card-bg);
+	border: 1px solid var(--border);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+body.tg-mode .tab-btn {
+	color: var(--text-muted);
+}
+
+body.tg-mode .tab-btn.active {
+	background: var(--primary);
+	color: #ffffff;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
+
+body.tg-mode .tab-btn:not(.active):hover {
+	background: var(--bg);
+	color: var(--text);
+}
+
+body.tg-mode .sidebar-panel {
+	background: var(--card-bg);
+	border: 1px solid var(--border);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+body.tg-mode .sidebar-title,
+body.tg-mode .field-label {
+	color: var(--text-muted);
+}
+
+body.tg-mode .sidebar-panel .form-select,
+body.tg-mode .sidebar-panel .form-control {
+	background-color: var(--bg);
+	color: var(--text);
+	border-color: var(--border);
+}
+
+body.tg-mode .sidebar-panel .form-select:focus,
+body.tg-mode .sidebar-panel .form-control:focus {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.25);
+}
+
+body.tg-mode .search-results {
+	background: var(--card-bg);
+	border-color: var(--border);
+}
+
+body.tg-mode .search-results button {
+	color: var(--text);
+}
+
+body.tg-mode .search-results button:hover {
+	background: var(--bg);
+	color: var(--primary);
+}
+
+body.tg-mode .search-results small {
+	color: var(--text-muted);
+}
+
+body.tg-mode .saved-group-item {
+	border-color: var(--border);
+	color: var(--text);
+}
+
+body.tg-mode .saved-group-item:hover {
+	background: var(--bg);
+}
+
+body.tg-mode .saved-group-item.active {
+	border-color: var(--primary);
+	background: var(--primary);
+	color: #ffffff;
+}
+
+body.tg-mode .save-button {
+	background: var(--primary);
+	color: #ffffff;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+body.tg-mode .schedule-nav {
+	background: var(--card-bg);
+	border-color: var(--border);
+}
+
+body.tg-mode .schedule-nav-row strong {
+	color: var(--text);
+}
+
+body.tg-mode .nav-btn {
+	background: var(--bg);
+	border-color: var(--border);
+	color: var(--text);
+}
+
+body.tg-mode .nav-btn:hover:not(:disabled) {
+	background: var(--primary);
+	border-color: var(--primary);
+	color: #ffffff;
+}
+
+body.tg-mode .today-btn {
+	background: var(--primary);
+	border-color: var(--primary);
+	color: #ffffff;
+}
+
+body.tg-mode .day-card {
+	background: var(--card-bg);
+	border-color: var(--border);
+}
+
+body.tg-mode .day-card.today {
+	border-color: var(--primary);
+}
+
+body.tg-mode .day-card-header {
+	background: var(--primary);
+	color: #ffffff;
+}
+
+body.tg-mode .day-date,
+body.tg-mode .day-weekday {
+	color: #ffffff;
+}
+
+body.tg-mode .day-fulldate {
+	color: rgba(255, 255, 255, 0.8);
+}
+
+body.tg-mode .today-badge {
+	background: rgba(255, 255, 255, 0.25);
+	color: #ffffff;
+}
+
+body.tg-mode .lesson-slot {
+	border-bottom-color: var(--border);
+}
+
+body.tg-mode .lesson-slot .lesson-time {
+	border-right-color: var(--primary);
+	background: var(--bg);
+}
+
+body.tg-mode .time-num {
+	color: var(--primary);
+}
+
+body.tg-mode .time-range {
+	color: var(--text-muted);
+}
+
+body.tg-mode .lesson-row:hover {
+	background: var(--bg);
+}
+
+body.tg-mode .lesson-row + .lesson-row {
+	border-top-color: var(--border);
+}
+
+body.tg-mode .lesson-discipline {
+	color: var(--text);
+}
+
+body.tg-mode .lesson-title svg {
+	color: var(--primary);
+}
+
+body.tg-mode .lesson-info {
+	color: var(--text-muted);
+}
+
+body.tg-mode .lesson-info svg {
+	color: var(--primary);
+}
+
+body.tg-mode .empty-state {
+	background: var(--card-bg);
+	border-color: var(--border);
+	color: var(--text-muted);
+}
+
+body.tg-mode .mobile-filter-toggle {
+	background: var(--card-bg);
+	border-color: var(--border);
+	color: var(--text);
 }

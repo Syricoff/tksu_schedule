@@ -3,9 +3,15 @@ __pycache__
 .env
 .git
 .github
+.venv
+venv
 node_modules
-js
+dist
+src
+public
+legacy
 styles.css
 index.html
 logo.svg
 .vscode
+.DS_Store
